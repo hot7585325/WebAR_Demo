@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <!-- mindAR CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <!-- glb動畫的cdn -->
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
+  <script src="src\js\opa-ctrl.js"> </script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js'
+    integrity='sha512-NcZdtrT77bJr4STcmsGAESr06BYGE8woZdSdEgqnpyqac7sugNO+Tr4bGwGF3MsnEkGKhU2KL2xh6Ec+BqsaHA=='
+    crossorigin='anonymous'></script>
+
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<body>
+
+  <!-- ▼▼▼▼▼▼DOM區域▼▼▼▼▼▼ -->
+  <div class="MeshInfo" id="DOMCanvas">
+
+    <img id="Discripts" src="src\image\Discripts.png">
+    <img id="info_1" src="src\image\ed_p05.png">
+    <img id="info_2" src="src\image\ed_p09.png">
+
+
+  </div>
+
+
+  <!-- ▼▼▼▼▼▼ aframe 3D區域▼▼▼▼▼ -->
+  <a-scene color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    mindar-image="imageTargetSrc:targets.mind; maxTrack: 1 filterMinCF: 0.0001; filterBeta: 0.0001; uiScanning:src\image\scan.png "
+    cursor="rayOrigin: mouse" raycaster="objects: .clickable">
+
+
+    <!-- 聲音組件會與mindar-image-target衝突，所以不掛載在同一個物件上(預計透過事件通知) -->
+    <a-entity active-sound="src:src\audio\tool.mp3; targetid :model_1"> </a-entity>
+
+
+    <!-- 3D模型 -->
+    <a-entity id="model_1" position="0 -0.1 0" scale=".01 .01 .01" mindar-image-target="targetIndex: 0"
+      targetevent-global>
+      <a-entity touch-drag-rotate-scale="rotationCoordinate:world" reset-transform="rscale:3 3 3">
+
+        <!-- 主要模型 -->
+        <!-- <a-gltf-model src="src\model\ar_hotpoint.glb" active-ani="src:arrowAction.004" ></a-gltf-model>  -->
+
+        <!-- 設限測試模型 -->
+        <a-gltf-model src="src\model\hotspot.glb" mesh-info__1="meshname:立方體; idname:#Discripts" mesh-info__2="meshname:球體; idname:#info_2"></a-gltf-model>
+
+      </a-entity>
+    </a-entity>
+
+    <!-- 攝影機 -->
+    <a-camera position="0 0 .2" look-controls-enabled="false" ray-interactive="objclass: .recive-ray"></a-camera>
+
+  </a-scene>
+
+
+  <!-- ▼▼▼▼▼▼ DOM依賴腳本▼▼▼▼▼▼  -->
+  <script src="src\js\main.js"> </script>
+
+</body>
+
+</html>
