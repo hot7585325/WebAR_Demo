@@ -412,7 +412,7 @@ AFRAME.registerComponent('active-sound', {
       if (this.data.IsActive) {
         this.el.components.sound.playSound();
       } else {
-        this.el.components.sound.pauseSound();
+        this.el.components.sound.stopSound();
       }
     }
   }
@@ -465,7 +465,7 @@ AFRAME.registerComponent('ray-interactive',
 
     init: function () {
       this.el.setAttribute("raycaster", `objects:${this.data.objclass}`)
-      this.el.setAttribute("cursor", "fuse: true; fuseTimeout: 500 rayOrigin: mouse")
+      this.el.setAttribute("cursor", "fuse: false; fuseTimeout: 500 rayOrigin: mouse")
       // this.el.addEventListener('click', function (evt) { console.log("發送_射線事件=",evt.detail.intersection.object.name); });  //打到mesh
     },
   });
@@ -538,39 +538,43 @@ AFRAME.registerComponent('domctrl', {
 //#region 點擊模型後，判斷射線是否擊中設定的網格名稱，符合就開啟dom
 
 AFRAME.registerComponent('mesh-info', {
-  multiple:true,
+  multiple: true,
   schema: {
     meshname: { type: "string" },
     idname: { type: "string" }
   },
 
-  init: function ()
-  {
+  init: function () {
     this.isHide = false;
     this.dom = document.querySelector(this.data.idname);
     console.log("dom物件=" + this.dom)
     this.dom.style.display = "none";
-
+    this.IsTrigger = false;
 
     this.el.setAttribute("class", "recive-ray"); //直接設定class name
-//滑鼠
-    this.el.addEventListener('click', (e) =>{if (e.detail.intersection != null)
-      {
-          console.log("接收_射線事件=", e.detail.intersection.object.name)
-          if (this.data.meshname === e.detail.intersection.object.name){
-              console.log("吻合mesh名稱，觸發涵式", this.data.meshname);
-              this.SwitchDOM();}
-      }})
-//觸控
-       this.el.addEventListener('touchstart', (e) =>{if (e.detail.intersection != null)
-      {
-          console.log("接收_射線事件=", e.detail.intersection.object.name)
-          if (this.data.meshname === e.detail.intersection.object.name){
-              console.log("吻合mesh名稱，觸發涵式", this.data.meshname);
-              this.SwitchDOM();}
-      }})
+    //滑鼠
+    this.el.addEventListener('click', (e) => {
+      if (e.detail.intersection != null) {
+        console.log("接收_射線事件=", e.detail.intersection.object.name)
+        if (this.data.meshname === e.detail.intersection.object.name) {
+          console.log("吻合mesh名稱，觸發涵式", this.data.meshname);
+          this.SwitchDOM();
+        }
+      }
+    })
+
+    //觸控
+    this.el.addEventListener('touchstart', (e) => {
+      if (e.detail.intersection != null) {
+        console.log("接收_射線事件=", e.detail.intersection.object.name)
+        if (this.data.meshname === e.detail.intersection.object.name) {
+          console.log("吻合mesh名稱，觸發涵式", this.data.meshname);
+          this.SwitchDOM();
+        }
+      }
+    })
   },
-   
+
   SwitchDOM: function () {
     this.isHide = !this.isHide;
     if (this.isHide) {
