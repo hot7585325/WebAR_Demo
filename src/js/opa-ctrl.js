@@ -464,7 +464,7 @@ AFRAME.registerComponent('ray-interactive',
     },
 
     init: function () {
-      this.el.setAttribute("raycaster", `objects:${this.data.objclass}`)
+      this.el.setAttribute("raycaster", `objects:${this.data.objclass}; far:1500;`)
       this.el.setAttribute("cursor", "fuse: false; fuseTimeout: 500 rayOrigin: mouse")
       // this.el.addEventListener('click', function (evt) { console.log("發送_射線事件=",evt.detail.intersection.object.name); });  //打到mesh
     },
@@ -556,6 +556,7 @@ AFRAME.registerComponent('mesh-info', {
     this.el.addEventListener('click', (e) => {
       if (e.detail.intersection != null) {
         console.log("接收_射線事件=", e.detail.intersection.object.name)
+        console.log("距離="+e.detail.intersection.distance);
         if (this.data.meshname === e.detail.intersection.object.name) {
           console.log("吻合mesh名稱，觸發涵式", this.data.meshname);
           this.SwitchDOM();
@@ -568,7 +569,6 @@ AFRAME.registerComponent('mesh-info', {
       if (e.detail.intersection != null) {
         console.log("接收_射線事件=", e.detail.intersection.object.name)
         if (this.data.meshname === e.detail.intersection.object.name) {
-          console.log("吻合mesh名稱，觸發涵式", this.data.meshname);
           this.SwitchDOM();
         }
       }

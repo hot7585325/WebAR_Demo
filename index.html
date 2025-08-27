@@ -45,18 +45,19 @@
 
 
     <!-- 3D模型 -->
-    <a-entity id="model_1" position="0 -0.1 0" scale=".01 .01 .01" mindar-image-target="targetIndex: 0"
+    <a-entity id="model_1" position="0 -0.5 0" scale=".001 .001 .001" mindar-image-target="targetIndex: 0"
       targetevent-global>
-      <a-entity touch-drag-rotate-scale="rotationCoordinate:world" reset-transform="rscale:3 3 3">
+      <a-entity touch-drag-rotate-scale="rotationCoordinate:world" reset-transform="rscale:.3 .3 .3">
 
         <!-- 主要模型 -->
-        <a-gltf-model src="src\model\ar_hotpoint.glb" active-ani="src:arrowAction.004"
-          mesh-info__1="meshname:hotspot001; idname:#info_1" 
-          mesh-info__2="meshname:hotspot002; idname:#info_2"
-          mesh-info__3="meshname:hotspot003; idname:#info_3" 
-          mesh-info__4="meshname:hotspot004; idname:#info_4"
-          mesh-info__5="meshname:hotspot005; idname:#info_5" 
-          mesh-info__6="meshname:hotspot006; idname:#info_6">
+        <a-gltf-model src="src\model\ar_hotpoint.glb" active-ani="src:arrowAction.004"></a-gltf-model>
+        <a-gltf-model src="src\model\hotspot.glb"
+          mesh-info__1="meshname:hotsport_001; idname:#info_1" 
+          mesh-info__2="meshname:hotsport_002; idname:#info_2"
+          mesh-info__3="meshname:hotsport_003; idname:#info_3" 
+          mesh-info__4="meshname:hotsport_004; idname:#info_4"
+          mesh-info__5="meshname:hotsport_005; idname:#info_5" 
+          mesh-info__6="meshname:hotsport_006; idname:#info_6">
         </a-gltf-model>
 
         <!-- 設限測試模型 -->
