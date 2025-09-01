@@ -324,7 +324,7 @@ AFRAME.registerComponent('reset-transform',
   {
     schema:
     {
-      rrotation: { type: 'vec3', default: { x: 90, y: 0, z: 0 } },
+      rrotation: { type: 'vec3', default: { x: 0, y: 0, z: 0 } },
       rscale: { type: "vec3", default: { x: 1, y: 1, z: 1 } }
     },
     init: function () {
@@ -355,10 +355,17 @@ AFRAME.registerComponent('active-ani', {
 
     //獲得targetfound事件，把動畫暫停，
     this.el.setAttribute("animation-mixer", { clip: this.data.src, duration: 10, timeScale: 1 })  //把其他組件加入
-    window.addEventListener("touchstart", this.change_active.bind(this))  //可以用bind綁定
-    window.addEventListener("click", (event) => { this.change_active(); }); //也可以用箭頭函式
 
+    //圖片偵測事件
     window.addEventListener("targetlost-global-event", (event) => { this.el.setAttribute('active-ani', 'IsActive', false); })  //要更改data的值，都要用setAttribute
+
+    //觸控事件
+    // window.addEventListener("touchstart", this.change_active.bind(this))  //可以用bind綁定
+    // window.addEventListener("click", (event) => { this.change_active(); }); //也可以用箭頭函式
+
+    //DOM按鈕事件
+    const Ani_button= document.getElementById("Ani_button")
+    Ani_button.addEventListener("click", () => {this.change_active(); });
   },
 
   //aframe內建方法，當schema data改變時作用
@@ -395,12 +402,17 @@ AFRAME.registerComponent('active-sound', {
     //增加Sound組件
     this.el.setAttribute("sound", `src:${this.data.src}; loop:true; volume:1; autoplay:${this.data.autoplay}`)
 
-    //監聽事件
+    //圖片偵測事件
     window.addEventListener("targetfound-global-event", (event) => { this.evtid = event.detail })
-    // window.addEventListener("targetlost-global-event", (event) => { this.el.components.sound.stopSound();  this.evtid = null; })
     window.addEventListener("targetlost-global-event", (event) => { this.el.setAttribute('active-sound', 'IsActive', false); this.evtid = null; })
-    window.addEventListener("touchstart", () => { this.data.IsActive = !this.data.IsActive; this.el.setAttribute('active-sound', "IsActive", this.data.IsActive) });
-    window.addEventListener("click", () => { this.data.IsActive = !this.data.IsActive; this.el.setAttribute('active-sound', "IsActive", this.data.IsActive) });
+
+    //觸控事件
+    // window.addEventListener("touchstart", () => { this.data.IsActive = !this.data.IsActive; this.el.setAttribute('active-sound', "IsActive", this.data.IsActive) });
+    // window.addEventListener("click", () => { this.data.IsActive = !this.data.IsActive; this.el.setAttribute('active-sound', "IsActive", this.data.IsActive) });
+
+    //DOM按鈕事件
+    const Ani_button= document.getElementById("Ani_button")
+    Ani_button.addEventListener("click", () => { this.data.IsActive = !this.data.IsActive; this.el.setAttribute('active-sound', "IsActive", this.data.IsActive) });
 
     //測試區
     this.el.addEventListener("sound-loaded", () => this.data.IsLoaded = true);
@@ -464,8 +476,9 @@ AFRAME.registerComponent('ray-interactive',
     },
 
     init: function () {
-      this.el.setAttribute("raycaster", `objects:${this.data.objclass}; far:1500;`)
-      this.el.setAttribute("cursor", "fuse: false; fuseTimeout: 500 rayOrigin: mouse")
+      this.el.setAttribute("raycaster", `objects:${this.data.objclass}; far:9999; showLine:true`)
+      this.el.setAttribute("cursor", "fuse: false; rayOrigin: mouse")
+      this.el.setAttribute("line","color: red; opacity: 0.8")
       // this.el.addEventListener('click', function (evt) { console.log("發送_射線事件=",evt.detail.intersection.object.name); });  //打到mesh
     },
   });
@@ -547,7 +560,8 @@ AFRAME.registerComponent('mesh-info', {
   init: function () {
     this.isHide = false;
     this.dom = document.querySelector(this.data.idname);
-    console.log("dom物件=" + this.dom)
+    const info_Panel = document.querySelector("#info_Panel");
+    console.log("dom物件=" + this.dom);
     this.dom.style.display = "none";
     this.IsTrigger = false;
 
@@ -555,10 +569,9 @@ AFRAME.registerComponent('mesh-info', {
     //滑鼠
     this.el.addEventListener('click', (e) => {
       if (e.detail.intersection != null) {
-        console.log("接收_射線事件=", e.detail.intersection.object.name)
-        console.log("距離="+e.detail.intersection.distance);
+        // console.log("接收_射線事件=", e.detail.intersection.object.name)
         if (this.data.meshname === e.detail.intersection.object.name) {
-          console.log("吻合mesh名稱，觸發涵式", this.data.meshname);
+          // console.log("吻合mesh名稱，觸發涵式", this.data.meshname);
           this.SwitchDOM();
         }
       }
@@ -567,7 +580,7 @@ AFRAME.registerComponent('mesh-info', {
     //觸控
     this.el.addEventListener('touchstart', (e) => {
       if (e.detail.intersection != null) {
-        console.log("接收_射線事件=", e.detail.intersection.object.name)
+        // console.log("接收_射線事件=", e.detail.intersection.object.name)
         if (this.data.meshname === e.detail.intersection.object.name) {
           this.SwitchDOM();
         }
@@ -576,14 +589,16 @@ AFRAME.registerComponent('mesh-info', {
   },
 
   SwitchDOM: function () {
-    this.isHide = !this.isHide;
+    this.isHide = false;
     if (this.isHide) {
       this.dom.style.display = "none";
+      info_Panel.style.display="none"
     }
     else {
       this.dom.style.display = "block";
+       info_Panel.style.display="block"
     }
-    console.log("是否隱藏=" + this.isHide)
+    // console.log("是否隱藏=" + this.isHide)
   }
 });
 

@@ -4,16 +4,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <!-- aframe CDN -->
+  <!-- <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"
+    integrity="sha512-QRe0tMdbQUsh9BJOh+ijnsJaLoO68ku2a9/7HmQCIvqpeWRkqc4Ee0Ohjvt6y7Fx/ShFTLoL/H3ZgxZrXB7ERA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
   <!-- mindAR CDN -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  <!-- glb動畫的cdn -->
+
+  <!-- glb動畫 CDN -->
   <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
   <script src="src\js\opa-ctrl.js"> </script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js'
     integrity='sha512-NcZdtrT77bJr4STcmsGAESr06BYGE8woZdSdEgqnpyqac7sugNO+Tr4bGwGF3MsnEkGKhU2KL2xh6Ec+BqsaHA=='
     crossorigin='anonymous'></script>
-
   <link rel="stylesheet" href="styles.css">
 
 </head>
@@ -21,20 +27,28 @@
 <body>
 
   <!-- ▼▼▼▼▼▼DOM區域▼▼▼▼▼▼ -->
-  <div class="MeshInfo" id="DOMCanvas">
+<div id="ButtonPanel">
+    <div id="Ani_button"><img src="src\image\btn_start_blue.png"></div>
+</div>
 
+
+  <div class="MeshInfo" id="DOMCanvas">
     <img id="Discripts" src="src\image\Discripts.png">
-    <img class="info_image" id="info_1" src="src\image\info_1.png">
-    <img class="info_image" id="info_2" src="src\image\info_2.png">
-    <img class="info_image" id="info_3" src="src\image\info_3.png">
-    <img class="info_image" id="info_4" src="src\image\info_4.png">
-    <img class="info_image" id="info_5" src="src\image\info_5.png">
-    <img class="info_image" id="info_6" src="src\image\info_6.png">
+    
+    <div id="info_Panel">
+      <img class="info_image" id="info_1" src="src\image\info_1.png">
+      <img class="info_image" id="info_2" src="src\image\info_2.png">
+      <img class="info_image" id="info_3" src="src\image\info_3.png">
+      <img class="info_image" id="info_4" src="src\image\info_4.png">
+      <img class="info_image" id="info_5" src="src\image\info_5.png">
+      <img class="info_image" id="info_6" src="src\image\info_6.png">
+      <div id="info_button"><img src="src\image\btn_enter.png"></div>
+    </div>
   </div>
 
 
   <!-- ▼▼▼▼▼▼ aframe 3D區域▼▼▼▼▼ -->
-  <a-scene color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false"
+  <a-scene color-space="sRGB" renderer="colorManagement: false, physicallyCorrectLights" vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
     mindar-image="imageTargetSrc:targets.mind; maxTrack: 1 filterMinCF: 0.0001; filterBeta: 0.0001; uiScanning:src\image\scan.png "
     cursor="rayOrigin: mouse" raycaster="objects: .clickable">
@@ -45,23 +59,18 @@
 
 
     <!-- 3D模型 -->
-    <a-entity id="model_1" position="0 -0.5 0" scale=".001 .001 .001" mindar-image-target="targetIndex: 0"
+    <a-entity id="model_1" position="0 -0.5 0" scale=".0003 .0003 .0003" mindar-image-target="targetIndex: 0"
       targetevent-global>
-      <a-entity touch-drag-rotate-scale="rotationCoordinate:world" reset-transform="rscale:.3 .3 .3">
+      <a-entity touch-drag-rotate-scale="rotationCoordinate:world" reset-transform="rscale:1 1 1">
 
         <!-- 主要模型 -->
         <a-gltf-model src="src\model\ar_hotpoint.glb" active-ani="src:arrowAction.004"></a-gltf-model>
-        <a-gltf-model src="src\model\hotspot.glb"
-          mesh-info__1="meshname:hotsport_001; idname:#info_1" 
-          mesh-info__2="meshname:hotsport_002; idname:#info_2"
-          mesh-info__3="meshname:hotsport_003; idname:#info_3" 
-          mesh-info__4="meshname:hotsport_004; idname:#info_4"
-          mesh-info__5="meshname:hotsport_005; idname:#info_5" 
+        <!-- 按鈕模型 -->
+        <a-gltf-model src="src\model\hotspot.glb" mesh-info__1="meshname:hotsport_001; idname:#info_1"
+          mesh-info__2="meshname:hotsport_002; idname:#info_2" mesh-info__3="meshname:hotsport_003; idname:#info_3"
+          mesh-info__4="meshname:hotsport_004; idname:#info_4" mesh-info__5="meshname:hotsport_005; idname:#info_5"
           mesh-info__6="meshname:hotsport_006; idname:#info_6">
         </a-gltf-model>
-
-        <!-- 設限測試模型 -->
-        <!-- <a-gltf-model src="src\model\hotspot.glb" mesh-info__1="meshname:立方體; idname:#info_1" mesh-info__2="meshname:球體; idname:#info_2"></a-gltf-model> -->
 
       </a-entity>
     </a-entity>
