@@ -25,10 +25,10 @@
     position: relative;
     /* width: 100vw;
     max-width: 1080px; */
-    height: 100vh;
+    height: 95vh;
     max-height: 1830px;
     aspect-ratio: 1080/1830;
-    background-color: #ca4a4a00;
+    background-color: hwb(0 17% 12% / 0.5);
     pointer-events: auto;
     margin: auto;
 }
@@ -37,10 +37,10 @@
     display: none;
     position: absolute;
     top: 0;
-    left: 0;
+    left:0%;
     /* width: 100%;
     height: auto; */
-    height: 90%;
+    height: 100%;
     width: auto;
     max-height: 100%;
     object-fit: contain;
@@ -65,7 +65,7 @@
     z-index: 1000;
     bottom: 0;
     width: 100vw;
-    height: 10vh;
+    height: 20vh;
     background-color: rgba(232, 29, 29, 0);
 
     display: flex;
@@ -79,7 +79,7 @@
     cursor: pointer;
     border-width: 2px;
     border-radius: 30px;
-    background-color: rgb(255, 230, 0);
+    background-color: rgb(255, 149, 0);
 }
 
 #Ani_button p {
@@ -87,5 +87,5 @@
     justify-content: center;
     font-weight:bolder;
     font-size: 40px;
-    color: black;
+    color: rgb(248, 3, 3);
 }
