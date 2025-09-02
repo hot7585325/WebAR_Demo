@@ -28,7 +28,8 @@
 
   <!-- ▼▼▼▼▼▼DOM區域▼▼▼▼▼▼ -->
 <div id="ButtonPanel">
-    <div id="Ani_button"><img src="src\image\btn_start_blue.png"></div>
+    <!-- <div id="Ani_button"><img src="src\image\btn_start_blue.png"></div> -->
+      <div id="Ani_button"><p id="Ani_text">播放</p></div>
 </div>
 
 
@@ -52,7 +53,6 @@
     device-orientation-permission-ui="enabled: false"
     mindar-image="imageTargetSrc:targets.mind; maxTrack: 1 filterMinCF: 0.0001; filterBeta: 0.0001; uiScanning:src\image\scan.png "
     cursor="rayOrigin: mouse" raycaster="objects: .clickable">
-
 
     <!-- 聲音組件會與mindar-image-target衝突，所以不掛載在同一個物件上(預計透過事件通知) -->
     <a-entity active-sound="src:src\audio\tool.mp3; targetid :model_1"> </a-entity>

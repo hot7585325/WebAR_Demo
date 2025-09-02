@@ -28,3 +28,14 @@ info_button.addEventListener("click",()=>{info_4.style.display="none"; console.l
 info_button.addEventListener("click",()=>{info_5.style.display="none"; console.log("關閉物件資訊_info_5")})
 info_button.addEventListener("click",()=>{info_6.style.display="none"; console.log("關閉物件資訊_info_6")})
 //#endregion
+
+
+
+
+//#region 動畫按鈕
+  document.getElementById("Ani_button").addEventListener("click", function () {
+    const textEl = document.getElementById("Ani_text");
+    textEl.textContent = textEl.textContent === "播放" ? "暫停" : "播放";
+  });
+
+  //#endregion
