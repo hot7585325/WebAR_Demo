@@ -23,8 +23,10 @@
 #info_Panel {
     display: none;
     position: relative;
-    width: 100vw;
-    max-width: 1080px;
+    /* width: 100vw;
+    max-width: 1080px; */
+    height: 100vh;
+    max-height: 1830px;
     aspect-ratio: 1080/1830;
     background-color: #ca4a4a00;
     pointer-events: auto;
