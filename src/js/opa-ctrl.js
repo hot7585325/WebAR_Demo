@@ -343,6 +343,7 @@ AFRAME.registerComponent('active-ani', {
   {
     IsActive: { type: 'boolean', default: false }, // 初始化完成後是否自動播放
     IsLoaded: { type: 'boolean', default: false }, // 是否載入完成
+    sec:{type:'number',default:8},
     src: { type: "asset" }
   },
   init: function () {
@@ -353,8 +354,7 @@ AFRAME.registerComponent('active-ani', {
     //監聽模型載入是否完成
     this.el.addEventListener("model-loaded", () => this.data.IsLoaded = true);
 
-    //獲得targetfound事件，把動畫暫停，
-    this.el.setAttribute("animation-mixer", { clip: this.data.src, duration: 10, timeScale: 1 })  //把其他組件加入
+    this.el.setAttribute("animation-mixer", { clip: this.data.src, duration: this.data.sec, timeScale: 1 })  //把其他組件加入
 
     //圖片偵測事件
     window.addEventListener("targetlost-global-event", (event) => { this.el.setAttribute('active-ani', 'IsActive', false); })  //要更改data的值，都要用setAttribute
@@ -364,15 +364,22 @@ AFRAME.registerComponent('active-ani', {
     // window.addEventListener("click", (event) => { this.change_active(); }); //也可以用箭頭函式
 
     //DOM按鈕事件
-    const Ani_button= document.getElementById("Ani_button")
-    Ani_button.addEventListener("click", () => {this.change_active(); });
+    const Ani_button = document.getElementById("Ani_button")
+    Ani_button.addEventListener("click", () => { this.change_active(); });
   },
 
   //aframe內建方法，當schema data改變時作用
   update: function (OldData) {
 
     if (OldData.IsActive != this.data.IsActive) {
-      this.el.setAttribute("animation-mixer", { timeScale: this.data.IsActive ? 1 : 0 })
+      // this.el.setAttribute("animation-mixer", { timeScale: this.data.IsActive ? 1 : 0 })   //開始 暫停
+
+      if (this.data.IsActive) {
+        this.el.setAttribute("animation-mixer", { clip: this.data.src, duration:  this.data.sec, timeScale: 1 })
+      }
+      else {
+        this.el.setAttribute("animation-mixer", { clip: "idle", duration:  this.data.sec, timeScale: 0 })
+      }
     }
   },
   //控制開關
@@ -411,7 +418,7 @@ AFRAME.registerComponent('active-sound', {
     // window.addEventListener("click", () => { this.data.IsActive = !this.data.IsActive; this.el.setAttribute('active-sound', "IsActive", this.data.IsActive) });
 
     //DOM按鈕事件
-    const Ani_button= document.getElementById("Ani_button")
+    const Ani_button = document.getElementById("Ani_button")
     Ani_button.addEventListener("click", () => { this.data.IsActive = !this.data.IsActive; this.el.setAttribute('active-sound', "IsActive", this.data.IsActive) });
 
     //測試區
@@ -478,7 +485,7 @@ AFRAME.registerComponent('ray-interactive',
     init: function () {
       this.el.setAttribute("raycaster", `objects:${this.data.objclass}; far:9999; showLine:true`)
       this.el.setAttribute("cursor", "fuse: false; rayOrigin: mouse")
-      this.el.setAttribute("line","color: red; opacity: 0.8")
+      this.el.setAttribute("line", "color: red; opacity: 0.8")
       // this.el.addEventListener('click', function (evt) { console.log("發送_射線事件=",evt.detail.intersection.object.name); });  //打到mesh
     },
   });
@@ -592,11 +599,11 @@ AFRAME.registerComponent('mesh-info', {
     this.isHide = false;
     if (this.isHide) {
       this.dom.style.display = "none";
-      info_Panel.style.display="none"
+      info_Panel.style.display = "none"
     }
     else {
       this.dom.style.display = "block";
-       info_Panel.style.display="block"
+      info_Panel.style.display = "block"
     }
     // console.log("是否隱藏=" + this.isHide)
   }
