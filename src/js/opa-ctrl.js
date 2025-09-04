@@ -343,7 +343,7 @@ AFRAME.registerComponent('active-ani', {
   {
     IsActive: { type: 'boolean', default: false }, // 初始化完成後是否自動播放
     IsLoaded: { type: 'boolean', default: false }, // 是否載入完成
-    sec:{type:'number',default:8},
+    sec: { type: 'number', default: 8 },
     src: { type: "asset" }
   },
   init: function () {
@@ -375,10 +375,10 @@ AFRAME.registerComponent('active-ani', {
       // this.el.setAttribute("animation-mixer", { timeScale: this.data.IsActive ? 1 : 0 })   //開始 暫停
 
       if (this.data.IsActive) {
-        this.el.setAttribute("animation-mixer", { clip: this.data.src, duration:  this.data.sec, timeScale: 1 })
+        this.el.setAttribute("animation-mixer", { clip: this.data.src, duration: this.data.sec, timeScale: 1 })
       }
       else {
-        this.el.setAttribute("animation-mixer", { clip: "idle", duration:  this.data.sec, timeScale: 0 })
+        this.el.setAttribute("animation-mixer", { clip: "idle", duration: this.data.sec, timeScale: 0 })
       }
     }
   },
@@ -611,3 +611,27 @@ AFRAME.registerComponent('mesh-info', {
 
 
 //#endregion
+
+
+AFRAME.registerComponent('switch-model', {
+  schema: {
+    idname: { type: "string" },
+    IsVisible: { type: 'boolean', default: false },
+  },
+
+  init: function () {
+    dom= document.querySelector(this.data.idname);
+    dom.addEventListener("click", () => { this.switchModel(); console.log("物件狀態") })
+    this.el.setAttribute("visible", this.data.IsVisible)
+  },
+
+
+  switchModel() {
+    this.data.IsVisible = !this.data.IsVisible
+    this.el.setAttribute("visible", this.data.IsVisible)
+    console.log("物件狀態" + this.data.IsVisible)
+  }
+
+
+});
+

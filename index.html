@@ -29,7 +29,8 @@
   <!-- ▼▼▼▼▼▼DOM區域▼▼▼▼▼▼ -->
 <div id="ButtonPanel">
     <!-- <div id="Ani_button"><img src="src\image\btn_start_blue.png"></div> -->
-      <div id="Ani_button"><p id="Ani_text">播放</p></div>
+      <div class="CustomBtn" id="Ani_button"><p  id="Ani_text">動畫播放</p></div>
+      <div class="CustomBtn" id="Name_button"><p  id="Name_text">名稱顯示</p></div>
 </div>
 
 
@@ -66,11 +67,13 @@
         <!-- 主要模型 -->
         <a-gltf-model src="src\model\ar_hotpoint.glb" active-ani="src:*"></a-gltf-model>
         <!-- 按鈕模型 -->
-        <a-gltf-model src="src\model\hotspot.glb" active-ani="sec:2 src:*"
+        <a-gltf-model id="Trigger_Model" src="src\model\hotspot.glb" active-ani="sec:2 src:*" switch-model="idname:#Name_button; IsVisible:true"
         mesh-info__1="meshname:hotsport_001; idname:#info_1" mesh-info__2="meshname:hotsport_002; idname:#info_2" 
         mesh-info__3="meshname:hotsport_003; idname:#info_3" mesh-info__4="meshname:hotsport_004; idname:#info_4" 
         mesh-info__5="meshname:hotsport_005; idname:#info_5" mesh-info__6="meshname:hotsport_006; idname:#info_6">
         </a-gltf-model>
+         <!-- Marker模型 -->
+        <a-gltf-model id="Maeker_Model" src="src\model\Marker.glb" switch-model="idname:#Name_button; IsVisible:false"></a-gltf-model>
 
       </a-entity>
     </a-entity>

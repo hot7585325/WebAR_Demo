@@ -35,7 +35,23 @@ info_button.addEventListener("click",()=>{info_6.style.display="none"; console.l
 //#region 動畫按鈕
   document.getElementById("Ani_button").addEventListener("click", function () {
     const textEl = document.getElementById("Ani_text");
-    textEl.textContent = textEl.textContent === "播放" ? "暫停" : "播放";
+    textEl.textContent = textEl.textContent === "動畫播放" ? "動畫停止" : "動畫播放";
   });
 
-  //#endregion
+    document.getElementById("Name_button").addEventListener("click", function () {
+    const textEl = document.getElementById("Name_text");
+    textEl.textContent = textEl.textContent === "名稱顯示" ? "名稱關閉" : "名稱顯示";
+  });
+
+//#endregion
+
+//  document.getElementById("Name_button").addEventListener("click", function () {
+//     const Trigger_Model = document.querySelector("#Trigger_Model");
+//     const Maeker_Model = document.querySelector("#Maeker_Model");
+//     let isVisible = true;
+//     isVisible = !isVisible;
+//     Trigger_Model.setAttribute('visible', isVisible);
+//     Maeker_Model.setAttribute('visible', !isVisible); 
+//   });
+
+
