@@ -12,12 +12,34 @@
     align-items: center;
 }
 
-#Discripts {
-    display: none;
+#scan {
+    position: absolute;
     max-width: 90vw;
     max-height: 90vh;
     cursor: pointer;
     pointer-events: auto;
+}
+
+
+#Discripts {
+    position: absolute;
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.524);
+    cursor: pointer;
+    pointer-events: auto;
+
+}
+
+#Discripts img {
+
+    position: relative;
+    left: 50%;
+    width:100vw;
+     transform: translate(-50%, 0%);
+    aspect-ratio: 1080/1830;
+
 }
 
 #info_Panel {
@@ -28,8 +50,8 @@
     margin: auto;
     overflow-y: auto;
 
-    width: 100vw; 
-    max-width: 1080px; 
+    width: 100vw;
+    max-width: 1080px;
     height: 100vh;
 }
 
@@ -61,6 +83,7 @@
 }
 
 #ButtonPanel {
+    display: none;
     position: absolute;
     z-index: 1000;
     bottom: 0;
@@ -68,14 +91,13 @@
     height: 20vh;
     background-color: rgba(0, 0, 0, 0.113);
 
-    display: flex;
     justify-content: center;
     align-items: center;
     gap: 2%;
 }
 
 .CustomBtn {
-    width:auto;
+    width: auto;
     max-width: 200px;
     cursor: pointer;
     border-width: 2px;
