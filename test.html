@@ -1,39 +1,202 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>A-Frame WebXR Plane Detection Example</title>
-  <meta name="description" content="A-Frame example for WebXR plane detection and object placement.">
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="src\js\opa-ctrl.js"> </script>
+    <meta charset="utf-8">
+    <title>WebXR 平面偵測 - A-Frame</title>
+    <meta name="description" content="WebXR plane detection with A-Frame">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.0/aframe-ar.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"
+    integrity="sha512-QRe0tMdbQUsh9BJOh+ijnsJaLoO68ku2a9/7HmQCIvqpeWRkqc4Ee0Ohjvt6y7Fx/ShFTLoL/H3ZgxZrXB7ERA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 </head>
-
 <body>
-  <a-scene 
-    webxr="requiredFeatures: hit-test, plane-detection; optionalFeatures: dom-overlay;"
-    ar-hit-test-placer
-    renderer="colorManagement: true;">
+    <a-scene 
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false;"
+        vr-mode-ui="enabled: false"
+        renderer="antialias: true; alpha: true"
+        webxr="requiredFeatures: hit-test,local-floor; optionalFeatures: dom-overlay,unbounded">
+        
+        <a-assets>
+            <a-mixin 
+                id="cube" 
+                geometry="primitive: box; width: 0.1; height: 0.1; depth: 0.1"
+                material="color: #4CC3D9; opacity: 0.8">
+            </a-mixin>
+        </a-assets>
 
-    <a-assets>
-      <a-asset-item id="sunflower" src="https://cdn.glitch.global/e85cf24a-23a7-452a-875f-203713d6a951/sunflower.gltf?v=1681232338920"></a-asset-item>
-    </a-assets>
+        <!-- 相機設定 -->
+        <a-camera 
+            id="camera"
+            position="0 1.6 0"
+            wasd-controls="enabled: false"
+            look-controls="pointerLockEnabled: false">
+        </a-camera>
 
-    <a-camera></a-camera>
+        <!-- 光源 -->
+        <a-light type="ambient" color="#404040" intensity="0.4"></a-light>
+        <a-light type="directional" position="0 10 5" color="#ffffff" intensity="0.6"></a-light>
 
-    <a-light type="ambient" color="#FFF" intensity="0.7"></a-light>
-    <a-light type="directional" color="#FFF" intensity="0.8" position="-1 2 1"></a-light>
+        <!-- 初始的 box，將在平面偵測後定位 -->
+        <a-box 
+            id="test-box"
+            mixin="cube"
+            position="0 -10 0"
+            animation="property: rotation; to: 0 360 0; loop: true; dur: 10000">
+        </a-box>
 
-    <a-entity id="plane-container" plane-visualizer></a-entity>
+        <!-- 平面指示器 -->
+        <a-plane 
+            id="plane-indicator"
+            width="0.3" 
+            height="0.3" 
+            color="#FF0000" 
+            opacity="0.3"
+            position="0 -10 0"
+            rotation="-90 0 0">
+        </a-plane>
+    </a-scene>
 
-    <a-ring id="reticle" 
-            radius-inner="0.05" 
-            radius-outer="0.08" 
-            color="#4CC3D9" 
-            rotation="-90 0 0" 
-            visible="false">
-    </a-ring>
+    <div id="ui" style="position: absolute; top: 10px; left: 10px; color: white; font-family: Arial; z-index: 100;">
+        <div id="status">點擊「進入 AR」開始平面偵測</div>
+        <button id="start-ar" style="margin-top: 10px; padding: 10px; font-size: 16px;">進入 AR</button>
+    </div>
 
-    <a-entity id="model-to-place" gltf-model="#sunflower" visible="false"></a-entity>
+    <script>
+        // WebXR 平面偵測組件
+        AFRAME.registerComponent('plane-detection', {
+            init: function () {
+                this.hitTestSource = null;
+                this.hitTestSourceRequested = false;
+                this.planesDetected = new Set();
+                
+                this.el.sceneEl.addEventListener('enter-vr', () => {
+                    this.onEnterVR();
+                });
+            },
 
-  </a-scene>
+            onEnterVR: function () {
+                const session = this.el.sceneEl.renderer.xr.getSession();
+                if (!session) return;
+
+                // 設定狀態顯示
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = '正在偵測平面...';
+
+                // 請求 hit test source
+                session.requestReferenceSpace('viewer').then((referenceSpace) => {
+                    session.requestHitTestSource({ space: referenceSpace }).then((source) => {
+                        this.hitTestSource = source;
+                        statusEl.textContent = '平面偵測已啟動，移動設備尋找平面';
+                    });
+                });
+
+                // 監聽觸控事件來放置物件
+                this.el.sceneEl.addEventListener('click', this.onSelect.bind(this));
+            },
+
+            tick: function () {
+                if (!this.hitTestSource) return;
+
+                const session = this.el.sceneEl.renderer.xr.getSession();
+                const frame = this.el.sceneEl.frame;
+                
+                if (!session || !frame) return;
+
+                const referenceSpace = this.el.sceneEl.renderer.xr.getReferenceSpace();
+                const hitTestResults = frame.getHitTestResults(this.hitTestSource);
+
+                if (hitTestResults.length > 0) {
+                    const hit = hitTestResults[0];
+                    const pose = hit.getPose(referenceSpace);
+                    
+                    if (pose) {
+                        // 更新平面指示器位置
+                        const indicator = document.getElementById('plane-indicator');
+                        const position = pose.transform.position;
+                        const orientation = pose.transform.orientation;
+                        
+                        indicator.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+                        indicator.setAttribute('quaternion', `${orientation.x} ${orientation.y} ${orientation.z} ${orientation.w}`);
+                        
+                        // 顯示指示器
+                        if (indicator.getAttribute('position').y <= -5) {
+                            indicator.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+                        }
+
+                        // 更新狀態
+                        const statusEl = document.getElementById('status');
+                        statusEl.textContent = '找到平面！點擊螢幕放置物件';
+                    }
+                }
+            },
+
+            onSelect: function () {
+                if (!this.hitTestSource) return;
+
+                const session = this.el.sceneEl.renderer.xr.getSession();
+                const frame = this.el.sceneEl.frame;
+                
+                if (!session || !frame) return;
+
+                const referenceSpace = this.el.sceneEl.renderer.xr.getReferenceSpace();
+                const hitTestResults = frame.getHitTestResults(this.hitTestSource);
+
+                if (hitTestResults.length > 0) {
+                    const hit = hitTestResults[0];
+                    const pose = hit.getPose(referenceSpace);
+                    
+                    if (pose) {
+                        // 將 box 放置在偵測到的平面上
+                        const box = document.getElementById('test-box');
+                        const position = pose.transform.position;
+                        
+                        box.setAttribute('position', `${position.x} ${position.y + 0.05} ${position.z}`);
+                        
+                        // 添加一個小的彈跳動畫
+                        box.setAttribute('animation__bounce', {
+                            property: 'position',
+                            from: `${position.x} ${position.y + 0.05} ${position.z}`,
+                            to: `${position.x} ${position.y + 0.15} ${position.z}`,
+                            dur: 500,
+                            direction: 'alternate',
+                            easing: 'easeInOutQuad',
+                            loop: 2
+                        });
+
+                        // 更新狀態
+                        document.getElementById('status').textContent = '物件已放置！';
+                    }
+                }
+            }
+        });
+
+        // 將平面偵測組件添加到場景
+        document.addEventListener('DOMContentLoaded', function() {
+            const scene = document.querySelector('a-scene');
+            scene.setAttribute('plane-detection', '');
+            
+            // 開始 AR 按鈕事件
+            document.getElementById('start-ar').addEventListener('click', function() {
+                const scene = document.querySelector('a-scene');
+                scene.enterVR();
+            });
+
+            // 檢查 WebXR 支援
+            if ('xr' in navigator) {
+                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                    if (!supported) {
+                        document.getElementById('status').textContent = '此設備不支援 WebXR AR';
+                        document.getElementById('start-ar').disabled = true;
+                    }
+                });
+            } else {
+                document.getElementById('status').textContent = '此瀏覽器不支援 WebXR';
+                document.getElementById('start-ar').disabled = true;
+            }
+        });
+    </script>
 </body>
 </html>
