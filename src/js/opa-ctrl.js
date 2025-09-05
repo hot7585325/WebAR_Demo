@@ -25,7 +25,7 @@ AFRAME.registerComponent('mp-recive', {
 
 //#endregion
 
-//#region Gemini寫的觸控旋轉
+//#region 觸控旋轉縮放(AI)
 /* global AFRAME, THREE */
 
 /**
@@ -612,7 +612,7 @@ AFRAME.registerComponent('mesh-info', {
 
 //#endregion
 
-
+//#region  DOM開關物件
 AFRAME.registerComponent('switch-model', {
   schema: {
     idname: { type: "string" },
@@ -625,13 +625,190 @@ AFRAME.registerComponent('switch-model', {
     this.el.setAttribute("visible", this.data.IsVisible)
   },
 
-
   switchModel() {
     this.data.IsVisible = !this.data.IsVisible
     this.el.setAttribute("visible", this.data.IsVisible)
     console.log("物件狀態" + this.data.IsVisible)
   }
 
-
 });
 
+//#endregion
+
+//#region 平面偵測(AI)
+
+
+    // --- 1. 用於視覺化偵測到的平面的組件 ---
+    AFRAME.registerComponent('plane-visualizer', {
+      schema: {
+        planeColor: {type: 'color', default: '#FFFFFF'},
+        gridSrc: {type: 'string', default: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/grid.png'}
+      },
+      
+      init: function () {
+        this.planes = {};
+        this.sceneEl = this.el.sceneEl;
+
+        // 當進入 AR 模式時，開始監聽平面事件
+        this.sceneEl.addEventListener('enter-vr', () => {
+          if (this.sceneEl.is('ar-mode')) {
+            const xrSession = this.sceneEl.xrSession;
+            
+            // 當 XR 設備偵測到新平面時觸發
+            xrSession.addEventListener('plane-detected', (event) => {
+              const plane = event.plane;
+              this.addPlane(plane);
+            });
+
+            // 當平面更新或移除時 (目前較少瀏覽器完整支援)
+            xrSession.addEventListener('plane-updated', (event) => {
+              const plane = event.plane;
+              this.updatePlane(plane);
+            });
+
+            xrSession.addEventListener('plane-removed', (event) => {
+              const plane = event.plane;
+              this.removePlane(plane);
+            });
+          }
+        });
+      },
+
+      addPlane: function(plane) {
+        const planeEntity = document.createElement('a-plane');
+        
+        // 設定平面的材質，使用半透明網格
+        planeEntity.setAttribute('material', {
+          src: this.data.gridSrc,
+          color: this.data.planeColor,
+          transparent: true,
+          opacity: 0.5,
+          repeat: '10 10' // 讓網格重複
+        });
+
+        // 將 A-Frame 平面與 WebXR 回傳的 plane 物件關聯起來
+        this.planes[plane.id] = planeEntity;
+        this.updatePlane(plane);
+        
+        this.el.appendChild(planeEntity);
+        console.log('Plane detected and added:', plane.id);
+      },
+      
+      updatePlane: function(plane) {
+        const planeEntity = this.planes[plane.id];
+        if (!planeEntity) return;
+        
+        // 更新平面的位置、旋轉和大小
+        planeEntity.object3D.matrix.fromArray(plane.matrix);
+        planeEntity.setAttribute('width', plane.polygon.length > 0 ? plane.polygon[0].x * 2 : 1);
+        planeEntity.setAttribute('height', plane.polygon.length > 0 ? plane.polygon[0].z * 2 : 1);
+      },
+
+      removePlane: function(plane) {
+        const planeEntity = this.planes[plane.id];
+        if (planeEntity) {
+          this.el.removeChild(planeEntity);
+          delete this.planes[plane.id];
+        }
+      }
+    });
+
+    // --- 2. 用於 AR Hit-Test (點擊放置) 的組件 ---
+    AFRAME.registerComponent('ar-hit-test-placer', {
+      init: function() {
+        this.reticle = document.querySelector('#reticle'); // 取得指標實體
+        this.modelToPlace = document.querySelector('#model-to-place'); // 取得要放置的模型
+        this.el.sceneEl.renderer.xr.addEventListener('sessionstart', (ev) => {
+          this.xrSession = this.el.sceneEl.renderer.xr.getSession();
+          this.viewerSpace = null;
+          this.refSpace = this.el.sceneEl.renderer.xr.getReferenceSpace();
+          this.xrSession.requestReferenceSpace('viewer').then((space) => {
+            this.viewerSpace = space;
+          });
+        });
+
+        // 監聽螢幕點擊事件
+        window.addEventListener('click', () => {
+          if (this.reticle.getAttribute('visible')) {
+            // 複製一個新模型並放置
+            const newModel = this.modelToPlace.cloneNode(true);
+            newModel.setAttribute('visible', true);
+            newModel.setAttribute('position', this.reticle.getAttribute('position'));
+            newModel.setAttribute('scale', '0.3 0.3 0.3');
+            this.el.sceneEl.appendChild(newModel);
+          }
+        });
+      },
+      
+      tick: function() {
+        if (!this.xrSession || !this.viewerSpace) return;
+        
+        // 進行 hit-test (從畫面中心發出射線)
+        this.xrSession.requestHitTestSource({ space: this.viewerSpace }).then((hitTestSource) => {
+          const frame = this.el.sceneEl.frame;
+          if (frame) {
+            const hitTestResults = frame.getHitTestResults(hitTestSource);
+            if (hitTestResults.length > 0) {
+              const hit = hitTestResults[0];
+              const pose = hit.getPose(this.refSpace);
+              
+              // 如果射線打到平面，顯示並移動指標
+              this.reticle.setAttribute('visible', true);
+              this.reticle.setAttribute('position', {
+                x: pose.transform.position.x,
+                y: pose.transform.position.y,
+                z: pose.transform.position.z
+              });
+            } else {
+              // 否則隱藏指標
+              this.reticle.setAttribute('visible', false);
+            }
+          }
+        });
+      }
+    });
+//#endregion
+
+
+//#region 粒子(AI)
+AFRAME.registerComponent('toggle-particles', {
+  schema: {
+    enabled: { type: 'boolean', default: true },
+    preset: { type: 'string', default: 'dust' },
+    particleCount: { type: 'int', default: 1000 },
+    color: { type: 'color', default: '#FFDD00' },
+    size: { type: 'number', default: 2 }
+  },
+
+  init: function () {
+    console.log('[toggle-particles] 初始化');
+    if (this.data.enabled) {
+      this.el.setAttribute('particle-system', {
+        preset: this.data.preset,
+        particleCount: this.data.particleCount,
+        color: this.data.color,
+        size: this.data.size
+      });
+      console.log('[toggle-particles] 粒子屬性已設定');
+    }
+  },
+
+  update: function () {
+    if (this.data.enabled) {
+      this.el.setAttribute('particle-system', {
+        preset: this.data.preset,
+        particleCount: this.data.particleCount,
+        color: this.data.color,
+        size: this.data.size
+      });
+    } else {
+      this.el.removeAttribute('particle-system');
+    }
+  },
+
+  toggle: function () {
+    this.data.enabled = !this.data.enabled;
+    this.update();
+  }
+});
+//#endregion
