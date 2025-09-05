@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>A-Frame WebXR Plane Detection Example</title>
+  <meta name="description" content="A-Frame example for WebXR plane detection and object placement.">
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="src\js\opa-ctrl.js"> </script>
+</head>
+
+<body>
+  <a-scene 
+    webxr="requiredFeatures: hit-test, plane-detection; optionalFeatures: dom-overlay;"
+    ar-hit-test-placer
+    renderer="colorManagement: true;">
+
+    <a-assets>
+      <a-asset-item id="sunflower" src="https://cdn.glitch.global/e85cf24a-23a7-452a-875f-203713d6a951/sunflower.gltf?v=1681232338920"></a-asset-item>
+    </a-assets>
+
+    <a-camera></a-camera>
+
+    <a-light type="ambient" color="#FFF" intensity="0.7"></a-light>
+    <a-light type="directional" color="#FFF" intensity="0.8" position="-1 2 1"></a-light>
+
+    <a-entity id="plane-container" plane-visualizer></a-entity>
+
+    <a-ring id="reticle" 
+            radius-inner="0.05" 
+            radius-outer="0.08" 
+            color="#4CC3D9" 
+            rotation="-90 0 0" 
+            visible="false">
+    </a-ring>
+
+    <a-entity id="model-to-place" gltf-model="#sunflower" visible="false"></a-entity>
+
+  </a-scene>
+</body>
+</html>
