@@ -26,12 +26,24 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
     </style>
+      <link rel="stylesheet" href="styles_P.css">
 </head>
 <body>
+  <!-- DOM區域 -->
+  <div id="ButtonPanel">
+    <div class="CustomBtn" id="Home_button">
+      <p id="Home_text">返回主選單</p>
+    </div>
+
+  </div>
+
 
     <a href="src\model\ar_hotpoint.usdz" rel="ar">
         <span>點擊這裡，在 AR 中查看模型</span>
     </a>
-
+  <!-- DOM依賴腳本  -->
+  <script >
+  document.getElementById("Home_button").addEventListener("click", function () {window.location.href='index.html' })
+</script>
 </body>
 </html>
