@@ -17,9 +17,6 @@
 
   <!-- 自製組件 -->
   <script src="src\js\opa-ctrl.js"> </script>
-  <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js'
-    integrity='sha512-NcZdtrT77bJr4STcmsGAESr06BYGE8woZdSdEgqnpyqac7sugNO+Tr4bGwGF3MsnEkGKhU2KL2xh6Ec+BqsaHA=='
-    crossorigin='anonymous'></script>
   <link rel="stylesheet" href="styles_P.css">
 
 </head>
@@ -57,11 +54,13 @@
 
 
   <!-- 平面偵測SCENE -->
-  <a-scene xr-mode="immersive-ar" webxr="optionalFeatures: hit-test;" vr-mode-ui="enabled: true" embedded>
-  
+  <!-- <a-scene xr-mode="immersive-ar" webxr="optionalFeatures: hit-test;" vr-mode-ui="enabled: true" embedded> -->
+  <a-scene
+    webxr="requiredFeatures: hit-test, local-floor; optionalFeatures: dom-overlay, unbounded; overlayElement: #overlay;"
+    xr-mode-ui="enabled: true;">
 
     <!-- 3D模型 -->
-    <a-entity touch-drag-rotate-scale="rotationCoordinate:world" hit-test>
+    <a-entity touch-drag-rotate-scale="rotationCoordinate:world">
       <a-gltf-model src="src\model\ar_hotpoint.glb" active-ani="src:*"></a-gltf-model>
     </a-entity>
 
@@ -76,6 +75,7 @@
 
   <!-- DOM依賴腳本  -->
   <script src="src\js\main.js"> </script>
+   <script src="src\js\PlaneTrackindMode.js"> </script>
 </body>
 
 </html>
