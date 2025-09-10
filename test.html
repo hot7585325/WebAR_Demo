@@ -2,10 +2,9 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>WebXR AR with Plane Detection & GLB Loading</title>
+    <title>Manual WebXR AR - XR Compatible Context</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
   </head>
   <body style="margin:0; padding:0; overflow:hidden; background:#000;">
     <div id="ui" style="position: absolute; top: 20px; left: 20px; right: 20px; z-index: 999;">
@@ -13,26 +12,12 @@
         啟動 AR
       </button>
       
-      <div style="margin-top: 10px; display: flex; gap: 10px;">
-        <input type="file" id="modelUpload" accept=".glb,.gltf" style="display: none;">
-        <button id="uploadBtn" style="flex: 1; padding: 15px; font-size: 16px; background: #2196F3; color: white; border: none; border-radius: 8px;">
-          上傳 GLB 模型
-        </button>
-        <button id="resetBtn" style="flex: 1; padding: 15px; font-size: 16px; background: #ff9800; color: white; border: none; border-radius: 8px;">
-          清除所有物件
-        </button>
-      </div>
-      
       <div id="status" style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.8); color: white; border-radius: 10px; font-family: Arial, sans-serif; font-size: 14px;">
-        準備測試 WebXR AR...
-      </div>
-      
-      <div id="instructions" style="margin-top: 10px; padding: 10px; background: rgba(0,100,200,0.7); color: white; border-radius: 8px; font-family: Arial, sans-serif; font-size: 13px;">
-        📱 說明：點擊偵測到的平面來放置 3D 物件
+        準備測試手動 WebXR...
       </div>
       
       <div id="debug" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.6); color: #ccc; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
-        <div>WebXR AR 除錯:</div>
+        <div>手動 WebXR 除錯:</div>
       </div>
     </div>
 
@@ -40,28 +25,13 @@
 
     <script>
       const startBtn = document.getElementById('startAR');
-      const uploadBtn = document.getElementById('uploadBtn');
-      const resetBtn = document.getElementById('resetBtn');
-      const modelUpload = document.getElementById('modelUpload');
       const status = document.getElementById('status');
       const debug = document.getElementById('debug');
       const canvas = document.getElementById('canvas');
       
-      let gl, xrSession, hitTestSource;
-      let scene, camera, renderer, reticle;
+      let gl, xrSession;
+      let scene, camera, renderer, cube;
       let animationFrameId;
-      let referenceSpace = null;
-      let referenceSpaceAttempted = false;
-      
-      // 模型相關
-      let currentModel = null;
-      let placedObjects = [];
-      let loader = new THREE.GLTFLoader();
-      let defaultModelUrl = 'test.glb'; // 預設模型檔案名
-      
-      // 平面偵測相關
-      let detectedPlanes = [];
-      let planeMeshes = [];
       
       function updateStatus(msg) {
         status.textContent = msg;
@@ -73,82 +43,28 @@
         div.textContent = new Date().toLocaleTimeString() + ': ' + msg;
         debug.appendChild(div);
         debug.scrollTop = debug.scrollHeight;
-        console.log('[AR]', msg);
+        console.log('[Manual AR]', msg);
         
-        if (debug.children.length > 30) {
+        if (debug.children.length > 25) {
           debug.removeChild(debug.children[1]);
         }
-      }
-      
-      async function loadModel(url) {
-        return new Promise((resolve, reject) => {
-          addDebug('載入模型: ' + url);
-          loader.load(
-            url,
-            (gltf) => {
-              addDebug('模型載入成功');
-              const model = gltf.scene;
-              
-              // 調整模型大小和位置
-              const box = new THREE.Box3().setFromObject(model);
-              const size = box.getSize(new THREE.Vector3());
-              const maxDim = Math.max(size.x, size.y, size.z);
-              const scale = 0.2 / maxDim; // 調整為合適大小
-              model.scale.setScalar(scale);
-              
-              // 將模型置中
-              const center = box.getCenter(new THREE.Vector3());
-              model.position.sub(center.multiplyScalar(scale));
-              
-              resolve(model);
-            },
-            (progress) => {
-              const percent = Math.round((progress.loaded / progress.total) * 100);
-              addDebug(`載入進度: ${percent}%`);
-            },
-            (error) => {
-              addDebug('模型載入失敗: ' + error.message);
-              reject(error);
-            }
-          );
-        });
-      }
-      
-      function createReticle() {
-        const geometry = new THREE.RingGeometry(0.02, 0.04, 32);
-        const material = new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          transparent: true,
-          opacity: 0.8
-        });
-        reticle = new THREE.Mesh(geometry, material);
-        reticle.matrixAutoUpdate = false;
-        reticle.visible = false;
-        scene.add(reticle);
-        addDebug('準星創建完成');
-      }
-      
-      function createDefaultCube() {
-        const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-        const material = new THREE.MeshLambertMaterial({ 
-          color: 0xff4444,
-          transparent: true,
-          opacity: 0.8
-        });
-        const cube = new THREE.Mesh(geometry, material);
-        return cube;
       }
       
       async function initThreeJS() {
         addDebug('創建 XR 兼容的 Three.js 環境...');
         
+        // 創建場景
         scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
         
+        // 創建相機
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
+        camera.position.z = 0;
+        
+        // 關鍵：先創建 XR 兼容的 WebGL 上下文
         const contextAttributes = {
           alpha: true,
           antialias: true,
-          xrCompatible: true
+          xrCompatible: true  // 這是關鍵！
         };
         
         gl = canvas.getContext('webgl', contextAttributes) || canvas.getContext('experimental-webgl', contextAttributes);
@@ -159,6 +75,7 @@
         
         addDebug('WebGL 上下文已創建 (xrCompatible: true)');
         
+        // 使用現有的 WebGL 上下文創建 Three.js 渲染器
         renderer = new THREE.WebGLRenderer({ 
           canvas: canvas,
           context: gl,
@@ -167,29 +84,20 @@
         });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        
+        // 創建一個簡單的立方體
+        const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        const material = new THREE.MeshBasicMaterial({ 
+          color: 0xff0000,
+          wireframe: false
+        });
+        cube = new THREE.Mesh(geometry, material);
+        cube.position.set(0, 0, -0.3);
+        scene.add(cube);
         
         // 添加光源
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-        
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(0, 10, 5);
-        directionalLight.castShadow = true;
-        scene.add(directionalLight);
-        
-        // 創建準星
-        createReticle();
-        
-        // 嘗試載入預設模型
-        try {
-          currentModel = await loadModel(defaultModelUrl);
-          addDebug('預設模型載入成功');
-        } catch (error) {
-          addDebug('預設模型載入失敗，使用預設立方體');
-          currentModel = createDefaultCube();
-        }
+        const light = new THREE.AmbientLight(0xffffff, 1);
+        scene.add(light);
         
         addDebug('Three.js XR 兼容初始化完成');
       }
@@ -208,162 +116,126 @@
             throw new Error('設備不支援 AR');
           }
           
-          if (gl && !gl.isXRCompatible) {
-            addDebug('將上下文標記為 XR 兼容...');
-            await gl.makeXRCompatible();
-          }
-          
-          addDebug('請求 AR 會話 (包含平面偵測)...');
+          addDebug('請求 AR 會話...');
           updateStatus('啟動 AR 會話...');
           
+          // 如果 WebGL 上下文還不是 XR 兼容，嘗試使其兼容
+          if (gl && !gl.isXRCompatible) {
+            addDebug('將現有上下文標記為 XR 兼容...');
+            try {
+              await gl.makeXRCompatible();
+              addDebug('上下文已成功標記為 XR 兼容');
+            } catch (error) {
+              addDebug('無法使上下文 XR 兼容: ' + error.message);
+              throw error;
+            }
+          }
+          
+          // 請求 AR 會話
           xrSession = await navigator.xr.requestSession('immersive-ar', {
-            requiredFeatures: ['local'],
-            optionalFeatures: ['plane-detection', 'hit-test']
+            requiredFeatures: [],
+            optionalFeatures: ['local', 'local-floor', 'bounded-floor', 'unbounded']
           });
           addDebug('AR 會話創建成功');
           
+          updateStatus('設置 WebGL 層...');
+          
+          // 創建 XR WebGL 層
           const glLayer = new XRWebGLLayer(xrSession, gl);
           await xrSession.updateRenderState({ baseLayer: glLayer });
           
-          xrSession.addEventListener('end', cleanup);
+          addDebug('WebGL 層設置完成');
           
-          // 獲取參考空間
-          referenceSpace = await xrSession.requestReferenceSpace('local');
-          addDebug('獲取參考空間成功');
+          // 會話結束監聽
+          xrSession.addEventListener('end', () => {
+            addDebug('AR 會話結束');
+            cleanup();
+          });
           
-          // 設置 hit test
-          try {
-            hitTestSource = await xrSession.requestHitTestSource({ space: referenceSpace });
-            addDebug('Hit test 設置成功');
-          } catch (error) {
-            addDebug('Hit test 設置失敗: ' + error.message);
-          }
+          updateStatus('開始手動 AR 渲染循環...');
+          addDebug('啟動手動渲染（嘗試獲取參考空間）');
           
-          updateStatus('AR 啟動成功！點擊平面放置物件');
+          // 手動啟動渲染循環
           animationFrameId = xrSession.requestAnimationFrame(onXRFrame);
           
-          // 添加點擊事件
-          canvas.addEventListener('click', onTouch);
+          updateStatus('AR 手動模式啟動成功！');
+          addDebug('手動 AR 渲染正在運行');
           
           setTimeout(() => {
             document.getElementById('ui').style.display = 'none';
-          }, 4000);
+          }, 3000);
           
         } catch (error) {
           updateStatus('AR 啟動失敗: ' + error.message);
           addDebug('詳細錯誤: ' + error.toString());
+          addDebug('錯誤堆疊: ' + (error.stack || '無堆疊資訊'));
           startBtn.disabled = false;
         }
       }
       
-      function onTouch(event) {
-        if (!xrSession || !reticle.visible) return;
-        
-        if (currentModel) {
-          const modelClone = currentModel.clone();
-          modelClone.position.copy(reticle.position);
-          modelClone.rotation.copy(reticle.rotation);
-          
-          // 隨機化顏色 (如果是預設立方體)
-          if (modelClone.material && modelClone.material.color) {
-            modelClone.material = modelClone.material.clone();
-            modelClone.material.color.setHSL(Math.random(), 0.8, 0.6);
-          }
-          
-          scene.add(modelClone);
-          placedObjects.push(modelClone);
-          
-          addDebug(`放置物件 #${placedObjects.length} 在 (${reticle.position.x.toFixed(2)}, ${reticle.position.y.toFixed(2)}, ${reticle.position.z.toFixed(2)})`);
-        }
-      }
+      let referenceSpace = null;
+      let referenceSpaceAttempted = false;
       
       function onXRFrame(time, frame) {
         if (!xrSession) return;
         
+        // 請求下一幀
         animationFrameId = xrSession.requestAnimationFrame(onXRFrame);
         
+        // 簡單動畫
+        if (cube) {
+          cube.rotation.x += 0.005;
+          cube.rotation.y += 0.01;
+        }
+        
+        // 嘗試獲取參考空間（只嘗試一次）
+        if (!referenceSpaceAttempted) {
+          referenceSpaceAttempted = true;
+          xrSession.requestReferenceSpace('local').then(space => {
+            referenceSpace = space;
+            addDebug('成功獲取 local 參考空間');
+          }).catch(() => {
+            addDebug('無法獲取參考空間，使用 null');
+          });
+        }
+        
+        // 獲取 viewer pose
         const pose = frame.getViewerPose(referenceSpace);
         
         if (pose) {
-          // Hit test for reticle positioning
-          if (hitTestSource) {
-            const hitTestResults = frame.getHitTestResults(hitTestSource);
-            if (hitTestResults.length > 0) {
-              const hit = hitTestResults[0];
-              reticle.visible = true;
-              reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-            } else {
-              reticle.visible = false;
-            }
-          }
-          
-          // 處理平面偵測
-          if (frame.detectedPlanes) {
-            updateDetectedPlanes(frame.detectedPlanes);
-          }
-          
-          // 渲染每個視圖
+          // 渲染每個視圖（通常 AR 只有一個視圖）
           for (const view of pose.views) {
+            // 設置視口
             const viewport = xrSession.renderState.baseLayer.getViewport(view);
             renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
             
+            // 更新相機矩陣
             camera.projectionMatrix.fromArray(view.projectionMatrix);
             camera.matrix.fromArray(view.transform.inverse.matrix);
             camera.matrix.decompose(camera.position, camera.quaternion, camera.scale);
             camera.updateMatrixWorld(true);
             
+            // 清除並渲染場景
             renderer.clear();
             renderer.render(scene, camera);
           }
+        } else {
+          // 如果無法獲取 pose，使用預設視圖渲染
+          renderer.render(scene, camera);
         }
-      }
-      
-      function updateDetectedPlanes(detectedPlanes) {
-        // 清除舊的平面網格
-        planeMeshes.forEach(mesh => scene.remove(mesh));
-        planeMeshes = [];
-        
-        // 為每個偵測到的平面創建視覺化網格
-        detectedPlanes.forEach((plane, index) => {
-          const geometry = new THREE.PlaneGeometry(1, 1);
-          const material = new THREE.MeshBasicMaterial({
-            color: 0x00ff00,
-            transparent: true,
-            opacity: 0.1,
-            wireframe: true
-          });
-          const planeMesh = new THREE.Mesh(geometry, material);
-          
-          // 設置平面位置和旋轉
-          const pose = plane.planeSpace.getOffsetReferenceSpace(referenceSpace);
-          planeMesh.matrix.fromArray(pose.transform.matrix);
-          planeMesh.matrixAutoUpdate = false;
-          
-          scene.add(planeMesh);
-          planeMeshes.push(planeMesh);
-        });
-      }
-      
-      function resetObjects() {
-        placedObjects.forEach(obj => scene.remove(obj));
-        placedObjects = [];
-        addDebug('已清除所有放置的物件');
-        updateStatus('物件已清除');
       }
       
       function cleanup() {
         if (animationFrameId) {
-          xrSession?.cancelAnimationFrame(animationFrameId);
+          if (xrSession) {
+            xrSession.cancelAnimationFrame(animationFrameId);
+          }
           animationFrameId = null;
         }
         
-        if (hitTestSource) {
-          hitTestSource.cancel();
-          hitTestSource = null;
+        if (xrSession) {
+          xrSession.end();
         }
-        
-        canvas.removeEventListener('click', onTouch);
-        
         xrSession = null;
         referenceSpace = null;
         referenceSpaceAttempted = false;
@@ -376,46 +248,34 @@
       
       // 事件監聽
       startBtn.addEventListener('click', startAR);
-      resetBtn.addEventListener('click', resetObjects);
-      
-      uploadBtn.addEventListener('click', () => {
-        modelUpload.click();
-      });
-      
-      modelUpload.addEventListener('change', async (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          try {
-            const url = URL.createObjectURL(file);
-            currentModel = await loadModel(url);
-            addDebug('自訂模型載入成功: ' + file.name);
-            URL.revokeObjectURL(url);
-          } catch (error) {
-            addDebug('自訂模型載入失敗: ' + error.message);
-          }
-        }
-      });
       
       // 初始化
       window.addEventListener('load', async () => {
-        addDebug('頁面載入，初始化 WebXR AR 環境');
+        addDebug('頁面載入，初始化 XR 兼容環境');
         addDebug('User Agent: ' + navigator.userAgent.substring(0, 50) + '...');
+        addDebug('Protocol: ' + window.location.protocol);
         
         try {
           await initThreeJS();
-          updateStatus('AR 環境準備就緒');
+          updateStatus('XR 兼容模式準備就緒');
         } catch (error) {
           updateStatus('初始化失敗: ' + error.message);
           addDebug('初始化錯誤: ' + error.toString());
         }
       });
       
+      // 視窗調整
       window.addEventListener('resize', () => {
         if (camera && renderer) {
           camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
           renderer.setSize(window.innerWidth, window.innerHeight);
         }
+      });
+      
+      // 添加錯誤處理
+      window.addEventListener('error', (event) => {
+        addDebug('全域錯誤: ' + event.error);
       });
       
     </script>
