@@ -4,8 +4,10 @@
     <meta charset="utf-8">
     <title>A-Frame AR Plane Detection Example</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script>src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"</script>
-    <script const vConsole = new VConsole()></script>
+
+   <!-- 網頁用Console -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
+  <script>  var vConsole = new VConsole();  </script>
   </head>
   <body style="margin:0; overflow:hidden;">
     <!-- UI 層 (dom-overlay 用) -->
@@ -80,7 +82,6 @@
           placeBtn.addEventListener("click", () => {
             if (box.getAttribute("visible")) {
               placed = true;
-              console.log("123")
             }
           });
         }
