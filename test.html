@@ -1,223 +1,185 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Manual WebXR AR - No Reference Space</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  </head>
-  <body style="margin:0; padding:0; overflow:hidden; background:#000;">
-    <div id="ui" style="position: absolute; top: 20px; left: 20px; right: 20px; z-index: 999;">
-      <button id="startAR" style="width: 100%; padding: 20px; font-size: 20px; background: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer;">
-        啟動 AR
-      </button>
-      
-      <div id="status" style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.8); color: white; border-radius: 10px; font-family: Arial, sans-serif; font-size: 14px;">
-        準備測試手動 WebXR...
-      </div>
-      
-      <div id="debug" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.6); color: #ccc; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
-        <div>手動 WebXR 除錯:</div>
-      </div>
-    </div>
+<head>
+  <meta charset="utf-8">
+  <title>WebXR 平面偵測與模型放置</title>
+  <meta name="description" content="A-Frame WebXR Plane Detection Example">
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <style>
+    /* 用於顯示 Log 的 DOM 元素樣式 */
+    #dom-log {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 150px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-family: monospace;
+      padding: 10px;
+      box-sizing: border-box;
+      overflow-y: scroll;
+      font-size: 12px;
+      z-index: 10000;
+    }
+    .ar-button {
+        position: fixed;
+        bottom: 160px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10001;
+        padding: 12px 24px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="dom-log">DOM Log Initialized...<br></div>
+  <button id="ar-button" class="ar-button" style="display: none;">Enter AR</button>
 
-    <canvas id="canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
+  <a-scene 
+    webxr="optionalFeatures: hit-test, dom-overlay; overlayElement: #dom-log"
+    ar-hit-test="target: #reticle;"
+    renderer="antialias: true; colorManagement: true;">
 
-    <script>
-      const startBtn = document.getElementById('startAR');
-      const status = document.getElementById('status');
-      const debug = document.getElementById('debug');
-      const canvas = document.getElementById('canvas');
-      
-      let gl, xrSession;
-      let scene, camera, renderer, cube;
-      let animationFrameId;
-      
-      function updateStatus(msg) {
-        status.textContent = msg;
-        addDebug('Status: ' + msg);
-      }
-      
-      function addDebug(msg) {
-        const div = document.createElement('div');
-        div.textContent = new Date().toLocaleTimeString() + ': ' + msg;
-        debug.appendChild(div);
-        debug.scrollTop = debug.scrollHeight;
-        console.log('[Manual AR]', msg);
+    <a-assets>
+      <a-asset-item id="model" src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"></a-asset-item>
+    </a-assets>
+
+    <a-camera></a-camera>
+    
+    <a-light type="ambient" color="#888"></a-light>
+    <a-light type="directional" intensity="0.5" position="-1 1 2"></a-light>
+
+    <a-entity id="reticle" 
+      geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02" 
+      material="color: #007bff; shader: flat"
+      visible="false">
+    </a-entity>
+
+    <a-entity id="placed-model" 
+      gltf-model="#model" 
+      scale="0.3 0.3 0.3" 
+      visible="false">
+    </a-entity>
+
+  </a-scene>
+
+  <script>
+    // 取得 DOM Log 元素
+    const logContainer = document.getElementById('dom-log');
+    const sceneEl = document.querySelector('a-scene');
+    const arButton = document.getElementById('ar-button');
+    const reticle = document.getElementById('reticle');
+    const placedModel = document.getElementById('placed-model');
+    let hitTestSource = null;
+    let modelPlaced = false;
+
+    // Log 函式
+    function logToDom(message) {
+      console.log(message); // 同時在瀏覽器開發者工具中輸出
+      logContainer.innerHTML += message + '<br>';
+      logContainer.scrollTop = logContainer.scrollHeight; // 自動滾動到底部
+    }
+
+    logToDom('頁面載入完成，等待 A-Frame 初始化。');
+
+    // 當 A-Frame 場景完全載入後
+    sceneEl.addEventListener('loaded', () => {
+        logToDom('A-Frame 場景已載入。');
         
-        if (debug.children.length > 25) {
-          debug.removeChild(debug.children[1]);
-        }
-      }
-      
-      function initThreeJS() {
-        addDebug('手動初始化 Three.js（不使用 XR）...');
-        
-        // 創建場景
-        scene = new THREE.Scene();
-        
-        // 創建相機
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
-        camera.position.z = 0;
-        
-        // 創建渲染器，但不啟用 XR
-        renderer = new THREE.WebGLRenderer({ 
-          canvas: canvas,
-          alpha: true,
-          antialias: true 
-        });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        // 重要：不設置 renderer.xr.enabled = true
-        
-        // 獲取 WebGL 上下文
-        gl = renderer.getContext();
-        
-        // 創建一個簡單的立方體
-        const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-        const material = new THREE.MeshBasicMaterial({ 
-          color: 0xff0000,
-          wireframe: false
-        });
-        cube = new THREE.Mesh(geometry, material);
-        cube.position.set(0, 0, -0.3);
-        scene.add(cube);
-        
-        // 添加光源
-        const light = new THREE.AmbientLight(0xffffff, 1);
-        scene.add(light);
-        
-        addDebug('Three.js 手動初始化完成');
-      }
-      
-      async function startAR() {
-        try {
-          updateStatus('檢查 WebXR 支援...');
-          startBtn.disabled = true;
-          
-          if (!navigator.xr) {
-            throw new Error('WebXR 不支援');
-          }
-          
-          const supported = await navigator.xr.isSessionSupported('immersive-ar');
-          if (!supported) {
-            throw new Error('設備不支援 AR');
-          }
-          
-          addDebug('請求最簡單的 AR 會話...');
-          updateStatus('啟動 AR 會話...');
-          
-          // 請求最基本的 AR 會話
-          xrSession = await navigator.xr.requestSession('immersive-ar');
-          addDebug('AR 會話創建成功');
-          
-          updateStatus('手動設置 WebGL 層...');
-          
-          // 手動設置 WebXR 層，不通過 Three.js
-          const glLayer = new XRWebGLLayer(xrSession, gl);
-          await xrSession.updateRenderState({ baseLayer: glLayer });
-          
-          addDebug('WebGL 層設置完成');
-          
-          // 會話結束監聽
-          xrSession.addEventListener('end', () => {
-            addDebug('AR 會話結束');
-            cleanup();
-          });
-          
-          updateStatus('開始手動 AR 渲染循環...');
-          addDebug('啟動手動渲染（完全跳過參考空間）');
-          
-          // 手動啟動渲染循環
-          animationFrameId = xrSession.requestAnimationFrame(onXRFrame);
-          
-          updateStatus('AR 手動模式啟動成功！');
-          addDebug('手動 AR 渲染正在運行');
-          
-          setTimeout(() => {
-            document.getElementById('ui').style.display = 'none';
-          }, 4000);
-          
-        } catch (error) {
-          updateStatus('AR 啟動失敗: ' + error.message);
-          addDebug('詳細錯誤: ' + error.toString());
-          addDebug('錯誤堆疊: ' + (error.stack || '無堆疊資訊'));
-          startBtn.disabled = false;
-        }
-      }
-      
-      function onXRFrame(time, frame) {
-        if (!xrSession) return;
-        
-        // 請求下一幀
-        animationFrameId = xrSession.requestAnimationFrame(onXRFrame);
-        
-        // 簡單動畫
-        if (cube) {
-          cube.rotation.x += 0.005;
-          cube.rotation.y += 0.01;
-        }
-        
-        // 獲取會話的渲染狀態
-        const session = xrSession;
-        const pose = frame.getViewerPose(null); // 不使用參考空間，直接傳 null
-        
-        if (pose) {
-          const view = pose.views[0];
-          
-          // 設置視口
-          const viewport = session.renderState.baseLayer.getViewport(view);
-          renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
-          
-          // 更新相機矩陣
-          camera.projectionMatrix.fromArray(view.projectionMatrix);
-          camera.matrix.fromArray(view.transform.inverse.matrix);
-          camera.matrix.decompose(camera.position, camera.quaternion, camera.scale);
-          camera.updateMatrixWorld(true);
-          
-          // 渲染場景
-          renderer.render(scene, camera);
+        // 檢查瀏覽器是否支援 WebXR
+        if (navigator.xr) {
+            logToDom('瀏覽器支援 WebXR。');
+            navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                if (supported) {
+                    logToDom('裝置支援 AR 模式。');
+                    arButton.style.display = 'block';
+                    arButton.addEventListener('click', () => {
+                        logToDom('使用者點擊 "Enter AR" 按鈕。');
+                    });
+                } else {
+                    logToDom('裝置不支援 AR 模式。');
+                }
+            });
         } else {
-          // 如果無法獲取 pose，就使用預設視圖渲染
-          renderer.render(scene, camera);
+            logToDom('瀏覽器不支援 WebXR API。');
         }
-      }
-      
-      function cleanup() {
-        if (animationFrameId) {
-          if (xrSession) {
-            xrSession.cancelAnimationFrame(animationFrameId);
-          }
-          animationFrameId = null;
-        }
+    });
+
+    // 當進入 AR 模式時
+    sceneEl.addEventListener('enter-vr', () => {
+        logToDom('成功進入 AR 模式。');
+        const session = sceneEl.xrSession;
         
-        xrSession = null;
-        startBtn.disabled = false;
-        startBtn.textContent = '重新啟動 AR';
-        document.getElementById('ui').style.display = 'block';
-        updateStatus('AR 會話已結束');
-      }
-      
-      // 事件監聽
-      startBtn.addEventListener('click', startAR);
-      
-      // 初始化
-      window.addEventListener('load', () => {
-        addDebug('頁面載入，準備手動 WebXR 模式');
-        addDebug('User Agent: ' + navigator.userAgent.substring(0, 50) + '...');
-        addDebug('Protocol: ' + window.location.protocol);
-        initThreeJS();
-        updateStatus('手動模式準備就緒');
-      });
-      
-      // 視窗調整
-      window.addEventListener('resize', () => {
-        if (camera && renderer) {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
+        // 要求一個 hit-test source，這是偵測真實世界平面的基礎
+        session.requestReferenceSpace('viewer').then((referenceSpace) => {
+            session.requestHitTestSource({ space: referenceSpace }).then((source) => {
+                hitTestSource = source;
+                logToDom('成功獲取 Hit-Test Source，平面偵測已啟用。');
+            });
+        });
+
+        // 監聽使用者點擊螢幕事件
+        session.addEventListener('select', onSelect);
+    });
+    
+    // 當離開 AR 模式時
+    sceneEl.addEventListener('exit-vr', () => {
+        logToDom('已離開 AR 模式。');
+        if (hitTestSource) hitTestSource.cancel();
+        hitTestSource = null;
+    });
+
+    // 每一幀渲染前執行的函式
+    function onXRFrame(time, frame) {
+        if (!hitTestSource) return;
+
+        const hitTestResults = frame.getHitTestResults(hitTestSource);
+        
+        if (hitTestResults.length > 0) {
+            // 偵測到平面
+            reticle.setAttribute('visible', true);
+            const hitPose = hitTestResults[0].getPose(sceneEl.xrSession.renderState.baseLayer.getViewport(frame.getViewerPose(sceneEl.xrSession.renderState.baseLayer.getViewport(frame.views[0]))).referenceSpace);
+
+            reticle.object3D.position.copy(hitPose.transform.position);
+            reticle.object3D.quaternion.copy(hitPose.transform.orientation);
+            
+        } else {
+            // 沒有偵測到平面
+            reticle.setAttribute('visible', false);
         }
-      });
-      
-    </script>
-  </body>
+    }
+
+    // 處理螢幕點擊
+    function onSelect(event) {
+        logToDom('偵測到螢幕點擊 (select) 事件。');
+        if (reticle.getAttribute('visible')) {
+            if (modelPlaced) {
+                logToDom('模型已存在，更新位置。');
+            } else {
+                logToDom('首次放置模型。');
+                modelPlaced = true;
+            }
+            // 將模型放置在準星的位置
+            placedModel.setAttribute('position', reticle.getAttribute('position'));
+            placedModel.setAttribute('visible', true);
+            logToDom(`模型已放置/更新於位置: ${JSON.stringify(reticle.getAttribute('position'))}`);
+        } else {
+            logToDom('點擊位置無效，未偵測到平面。');
+        }
+    }
+    
+    // 將 onXRFrame 註冊到 A-Frame 的渲染迴圈中
+    sceneEl.addEventListener('renderstart', () => {
+        sceneEl.xrSession.requestAnimationFrame(onXRFrame);
+    });
+
+  </script>
+</body>
 </html>
