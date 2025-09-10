@@ -5,6 +5,9 @@
   <title>WebXR 平面偵測與模型放置</title>
   <meta name="description" content="A-Frame WebXR Plane Detection Example">
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <!-- 網頁用Console -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
+  <script>  var vConsole = new VConsole();  </script>
   <style>
     /* 用於顯示 Log 的 DOM 元素樣式 */
     #dom-log {
@@ -102,6 +105,7 @@
                     arButton.style.display = 'block';
                     arButton.addEventListener('click', () => {
                         logToDom('使用者點擊 "Enter AR" 按鈕。');
+                        
                     });
                 } else {
                     logToDom('裝置不支援 AR 模式。');
