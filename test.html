@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Manual WebXR AR with HitTest</title>
+    <title>Manual WebXR AR with HitTest v2</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- vConsole -->
@@ -13,7 +13,7 @@
     <!-- 版本號 -->
     <div id="version" style="position:absolute; top:5px; left:5px; z-index:9999; 
          background:rgba(0,0,0,0.6); color:#0f0; padding:4px 8px; font-size:12px; border-radius:4px; font-family:monospace;">
-      v1
+      v2
     </div>
 
     <!-- UI -->
@@ -39,10 +39,10 @@
       
       let gl, xrSession, renderer, scene, camera;
       let referenceSpace, hitTestSource;
-      let cube = null;
+      let cube = null, reticle = null;
 
-      function log(msg) {
-        console.log('[AR]', msg);
+      function log(msg, data) {
+        console.log('[AR]', msg, data || '');
         status.textContent = msg;
       }
 
@@ -50,7 +50,6 @@
         log('初始化 Three.js 場景');
 
         scene = new THREE.Scene();
-
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
         const contextAttributes = { alpha: true, antialias: true, xrCompatible: true };
@@ -68,6 +67,13 @@
         // 光源
         const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
         scene.add(light);
+
+        // reticle 提示 (圓盤)
+        const ringGeo = new THREE.RingGeometry(0.08, 0.1, 32).rotateX(-Math.PI / 2);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.7 });
+        reticle = new THREE.Mesh(ringGeo, ringMat);
+        reticle.visible = false;
+        scene.add(reticle);
 
         log('Three.js 初始化完成');
       }
@@ -87,9 +93,8 @@
             domOverlay: { root: document.body }
           });
 
-          xrSession.addEventListener('end', () => {
-            log('XR Session 結束');
-          });
+          xrSession.addEventListener('end', () => log('XR Session 結束'));
+          xrSession.addEventListener('select', onSelect); // 點擊事件
 
           const glLayer = new XRWebGLLayer(xrSession, gl);
           await xrSession.updateRenderState({ baseLayer: glLayer });
@@ -123,23 +128,24 @@
           const hit = hitTestResults[0];
           const pose = hit.getPose(referenceSpace);
 
-          if (!cube) {
-            const geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
-            const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-            cube = new THREE.Mesh(geometry, material);
-            scene.add(cube);
-            log('立方體已建立');
-          }
-
-          cube.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
-          cube.quaternion.set(
+          // 顯示 reticle 提示
+          reticle.visible = true;
+          reticle.position.set(
+            pose.transform.position.x,
+            pose.transform.position.y,
+            pose.transform.position.z
+          );
+          reticle.quaternion.set(
             pose.transform.orientation.x,
             pose.transform.orientation.y,
             pose.transform.orientation.z,
             pose.transform.orientation.w
           );
+        } else {
+          reticle.visible = false;
         }
 
+        // 渲染
         for (const view of pose.views) {
           const viewport = xrSession.renderState.baseLayer.getViewport(view);
           renderer.setViewport(viewport.x, viewport.y, viewport.width, viewport.height);
@@ -150,6 +156,23 @@
           camera.updateMatrixWorld(true);
 
           renderer.render(scene, camera);
+        }
+      }
+
+      function onSelect() {
+        if (reticle.visible) {
+          if (!cube) {
+            const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+            const material = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0x440000 });
+            cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
+            log('立方體已建立');
+          }
+          cube.position.copy(reticle.position);
+          cube.quaternion.copy(reticle.quaternion);
+          log('立方體已放置於', cube.position);
+        } else {
+          log('沒有偵測到平面，無法放置');
         }
       }
 
