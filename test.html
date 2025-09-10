@@ -2,33 +2,38 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>A-Frame AR Plane Detection Example</title>
+    <title>A-Frame AR Plane Detection - Robust Version</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-   <!-- 網頁用Console -->
-  <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
-  <script>  var vConsole = new VConsole();  </script>
+    
+    <!-- 網頁用Console -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
+    <script>var vConsole = new VConsole();</script>
   </head>
- <body style="margin:0; overflow:hidden;">
-    <!-- UI 層 (dom-overlay 用) -->
-    <div id="overlay" style="position: absolute; top: 10px; left: 10px; color: white; z-index: 999; pointer-events: auto;">
-      <button id="placeBtn" style="padding: 10px; font-size: 16px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 5px;">放置物件</button>
-            <button id="startARBtn" style="padding: 10px; font-size: 16px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 5px;">開啟ar</button>
-      <div id="status" style="margin-top: 10px; padding: 5px; background: rgba(0,0,0,0.5); border-radius: 3px;">
+  <body style="margin:0; overflow:hidden;">
+    <!-- UI 層 -->
+    <div id="overlay" style="position: absolute; top: 10px; left: 10px; right: 10px; color: white; z-index: 999; pointer-events: auto;">
+      <button id="startARBtn" style="width: 100%; padding: 15px; font-size: 18px; background: #4CAF50; color: white; border: none; border-radius: 5px; margin-bottom: 10px;">啟動 AR</button>
+      <button id="placeBtn" style="width: 100%; padding: 10px; font-size: 16px; background: #f44336; color: white; border: none; border-radius: 5px; display: none; margin-bottom: 10px;">放置物件</button>
+      <button id="resetBtn" style="width: 100%; padding: 10px; font-size: 16px; background: #FF9800; color: white; border: none; border-radius: 5px; display: none;">重置</button>
+      
+      <div id="status" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.8); border-radius: 5px; font-size: 14px; word-wrap: break-word;">
         狀態: 初始化中...
+      </div>
+      
+      <div id="debug" style="margin-top: 5px; padding: 10px; background: rgba(0,0,0,0.6); border-radius: 5px; font-size: 12px; max-height: 300px; overflow-y: auto;">
+        <div>除錯資訊初始化...</div>
       </div>
     </div>
 
     <!-- A-Frame 場景 -->
     <a-scene
+      id="scene"
       vr-mode-ui="enabled: false"
       embedded
-      webxr="requiredFeatures: hit-test; optionalFeatures: dom-overlay; overlayElement: #overlay"
       renderer="colorManagement: true; antialias: true"
-      background="color: transparent"
-      ar-hit-test2>
+      background="color: transparent">
       
-      <!-- 會被放到平面的物件 (預設隱藏) -->
+      <!-- 會被放到平面的物件 -->
       <a-box 
         id="placedBox" 
         color="tomato" 
@@ -36,245 +41,284 @@
         height="0.2" 
         width="0.2" 
         visible="false"
-        shadow="cast: true; receive: false">
+        position="0 0 -2">
       </a-box>
       
-      <!-- 添加環境光和方向光 -->
-      <a-light type="ambient" color="#404040" intensity="0.4"></a-light>
-      <a-light type="directional" position="1 1 1" color="#ffffff" intensity="0.6" shadow="cast: true"></a-light>
+      <!-- 基本光照 -->
+      <a-light type="ambient" color="#404040"></a-light>
+      <a-light type="directional" position="1 1 1" color="#ffffff"></a-light>
       
       <a-camera></a-camera>
     </a-scene>
 
     <script>
-      AFRAME.registerComponent("ar-hit-test2", {
-        init: function () {
-          console.log("AR Hit Test component initialized");
+      // 全域錯誤處理
+      window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+        updateDebug('全域錯誤: ' + e.message);
+        updateStatus('發生錯誤: ' + e.message);
+      });
+
+      // 全域變數
+      let xrSession = null;
+      let hitTestSource = null;
+      let localSpace = null;
+      let placed = false;
+      let isSessionActive = false;
+      let animationId = null;
+
+      // DOM 元素
+      const sceneEl = document.getElementById('scene');
+      const box = document.getElementById('placedBox');
+      const startARBtn = document.getElementById('startARBtn');
+      const placeBtn = document.getElementById('placeBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const statusDiv = document.getElementById('status');
+      const debugDiv = document.getElementById('debug');
+
+      // 工具函數
+      function updateStatus(message) {
+        if (statusDiv) {
+          statusDiv.textContent = "狀態: " + message;
+        }
+        console.log("Status:", message);
+      }
+
+      function updateDebug(message) {
+        if (debugDiv) {
+          const timestamp = new Date().toLocaleTimeString();
+          const div = document.createElement('div');
+          div.textContent = `${timestamp}: ${message}`;
+          debugDiv.appendChild(div);
+          debugDiv.scrollTop = debugDiv.scrollHeight;
           
-          const sceneEl = this.el;
-          const box = document.getElementById("placedBox");
-          const placeBtn = document.getElementById("placeBtn");
-          const startARBtn = document.getElementById("startARBtn");
-          const statusDiv = document.getElementById("status");
-          const debugDiv = document.getElementById("debug");
-
-          let hitTestSource = null;
-          let localSpace = null;
-          let placed = false;
-          let isSessionActive = false;
-
-          // 更新狀態顯示
-          function updateStatus(message) {
-            if (statusDiv) {
-              statusDiv.textContent = "狀態: " + message;
-            }
-            console.log("Status:", message);
+          // 限制日誌數量
+          if (debugDiv.children.length > 50) {
+            debugDiv.removeChild(debugDiv.firstChild);
           }
+        }
+        console.log("Debug:", message);
+      }
 
-          // 更新除錯資訊
-          function updateDebug(message) {
-            if (debugDiv) {
-              const timestamp = new Date().toLocaleTimeString();
-              debugDiv.innerHTML += `<div>${timestamp}: ${message}</div>`;
-              debugDiv.scrollTop = debugDiv.scrollHeight;
-            }
-            console.log("Debug:", message);
+      // 重置函數
+      function resetSession() {
+        try {
+          updateDebug('重置會話...');
+          
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
           }
+          
+          if (xrSession) {
+            xrSession.end();
+          }
+          
+          xrSession = null;
+          hitTestSource = null;
+          localSpace = null;
+          placed = false;
+          isSessionActive = false;
+          
+          box.setAttribute("visible", false);
+          
+          startARBtn.style.display = 'block';
+          startARBtn.disabled = false;
+          startARBtn.textContent = '啟動 AR';
+          placeBtn.style.display = 'none';
+          resetBtn.style.display = 'none';
+          
+          updateStatus('已重置，可重新啟動');
+          
+        } catch (error) {
+          updateDebug('重置時發生錯誤: ' + error.message);
+        }
+      }
 
-          // 檢查 WebXR 支援
+      // 環境檢查
+      async function checkEnvironment() {
+        try {
+          updateDebug('開始環境檢查...');
+          
+          // 基本檢查
+          updateDebug(`User Agent: ${navigator.userAgent.substring(0, 100)}...`);
+          updateDebug(`Protocol: ${window.location.protocol}`);
+          updateDebug(`Host: ${window.location.host}`);
+          
+          // WebXR 檢查
           if (!navigator.xr) {
-            updateStatus("WebXR 不支援");
-            updateDebug("navigator.xr 不存在");
+            throw new Error('WebXR 不支援');
+          }
+          updateDebug('WebXR 可用');
+          
+          // AR 支援檢查
+          const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
+          updateDebug(`AR 支援: ${arSupported}`);
+          
+          if (!arSupported) {
+            throw new Error('設備不支援 AR');
+          }
+          
+          updateStatus('環境檢查完成，點擊啟動 AR');
+          return true;
+          
+        } catch (error) {
+          updateStatus('環境檢查失敗: ' + error.message);
+          updateDebug('環境檢查錯誤: ' + error.message);
+          return false;
+        }
+      }
+
+      // 啟動 AR 會話
+      async function startARSession() {
+        try {
+          updateDebug('準備啟動 AR 會話...');
+          updateStatus('正在啟動 AR...');
+          
+          startARBtn.disabled = true;
+          startARBtn.textContent = '啟動中...';
+
+          // 基本的會話選項
+          const sessionOptions = {
+            requiredFeatures: ['hit-test'],
+            optionalFeatures: ['dom-overlay'],
+            domOverlay: { root: document.getElementById('overlay') }
+          };
+
+          updateDebug('請求 AR 會話...');
+          xrSession = await navigator.xr.requestSession('immersive-ar', sessionOptions);
+          updateDebug('AR 會話創建成功');
+
+          // 設置渲染器
+          updateDebug('設置 WebGL 渲染器...');
+          await sceneEl.renderer.xr.setSession(xrSession);
+          updateDebug('渲染器設置完成');
+
+          isSessionActive = true;
+          updateStatus('正在初始化 AR 功能...');
+
+          // 請求參考空間
+          updateDebug('請求參考空間...');
+          try {
+            localSpace = await xrSession.requestReferenceSpace('local');
+            updateDebug('Local 參考空間獲取成功');
+          } catch (e) {
+            updateDebug('Local 空間失敗，嘗試 local-floor...');
+            localSpace = await xrSession.requestReferenceSpace('local-floor');
+            updateDebug('Local-floor 參考空間獲取成功');
+          }
+
+          // 請求 hit-test source
+          updateDebug('請求 hit-test source...');
+          const viewerSpace = await xrSession.requestReferenceSpace('viewer');
+          hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
+          updateDebug('Hit-test source 創建成功');
+
+          // 會話結束監聽
+          xrSession.addEventListener('end', () => {
+            updateDebug('AR 會話結束');
+            resetSession();
+          });
+
+          // 開始渲染循環
+          updateDebug('開始渲染循環...');
+          startRenderLoop();
+
+          updateStatus('AR 啟動完成！移動設備尋找平面');
+          startARBtn.style.display = 'none';
+          placeBtn.style.display = 'block';
+          resetBtn.style.display = 'block';
+
+        } catch (error) {
+          updateStatus('AR 啟動失敗: ' + error.message);
+          updateDebug('AR 啟動錯誤: ' + error.name + ' - ' + error.message);
+          
+          startARBtn.disabled = false;
+          startARBtn.textContent = '重試啟動 AR';
+          
+          // 清理
+          if (xrSession) {
+            try {
+              xrSession.end();
+            } catch (e) {
+              updateDebug('清理會話時發生錯誤: ' + e.message);
+            }
+          }
+          xrSession = null;
+          isSessionActive = false;
+        }
+      }
+
+      // 渲染循環
+      function startRenderLoop() {
+        function render(timestamp, frame) {
+          if (!isSessionActive || !xrSession) {
             return;
           }
 
-          updateDebug("WebXR 可用，檢查 AR 支援...");
+          animationId = xrSession.requestAnimationFrame(render);
 
-          // 詳細的環境檢查
-          async function checkEnvironment() {
-            try {
-              // 檢查 AR 支援
-              const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
-              updateDebug(`AR 支援: ${arSupported}`);
-              
-              if (arSupported) {
-                updateStatus("AR 支援，點擊按鈕啟動");
-                startARBtn.style.display = 'block';
-              } else {
-                updateStatus("AR 不支援");
-                updateDebug("設備或瀏覽器不支援 immersive-ar");
-              }
-
-              // 檢查用戶代理
-              updateDebug(`User Agent: ${navigator.userAgent}`);
-              
-              // 檢查是否為 HTTPS
-              updateDebug(`Protocol: ${window.location.protocol}`);
-              if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-                updateDebug("警告: 不是 HTTPS，AR 可能無法正常運作");
-              }
-
-            } catch (error) {
-              updateStatus("檢查環境時發生錯誤");
-              updateDebug(`環境檢查錯誤: ${error.message}`);
-            }
+          if (!frame || !hitTestSource || !localSpace) {
+            return;
           }
 
-          checkEnvironment();
+          try {
+            const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-          // 手動啟動 AR
-          startARBtn.addEventListener('click', async () => {
-            updateDebug("用戶點擊啟動 AR 按鈕");
-            
-            try {
-              updateStatus("正在啟動 AR...");
-              startARBtn.disabled = true;
-              startARBtn.textContent = "啟動中...";
-
-              // 嘗試直接啟動 AR 會話
-              if (navigator.xr) {
-                updateDebug("嘗試請求 AR 會話...");
-                
-                const session = await navigator.xr.requestSession('immersive-ar', {
-                  requiredFeatures: ['hit-test'],
-                  optionalFeatures: ['dom-overlay'],
-                  domOverlay: { root: document.getElementById('overlay') }
-                });
-                
-                updateDebug("AR 會話請求成功");
-                
-                // 設定會話到 A-Frame
-                sceneEl.renderer.xr.setSession(session);
-                
-                updateStatus("正在初始化...");
-                
-              } else {
-                throw new Error("WebXR 不可用");
-              }
+            if (hitTestResults.length > 0 && !placed) {
+              const pose = hitTestResults[0].getPose(localSpace);
               
-            } catch (error) {
-              updateStatus("啟動 AR 失敗");
-              updateDebug(`AR 啟動錯誤: ${error.name} - ${error.message}`);
-              startARBtn.disabled = false;
-              startARBtn.textContent = "重試啟動 AR";
-              
-              // 嘗試降級方案
-              updateDebug("嘗試使用 A-Frame 內建方式啟動...");
-              try {
-                sceneEl.enterVR();
-              } catch (fallbackError) {
-                updateDebug(`降級方案也失敗: ${fallbackError.message}`);
-              }
-            }
-          });
-
-          // Session 開始事件
-          sceneEl.renderer.xr.addEventListener("sessionstart", async () => {
-            console.log("XR Session started");
-            updateStatus("AR 會話已啟動");
-            updateDebug("XR 會話開始事件觸發");
-            isSessionActive = true;
-            
-            startARBtn.style.display = 'none';
-            placeBtn.style.display = 'block';
-            
-            try {
-              const session = sceneEl.renderer.xr.getSession();
-              updateDebug(`會話特性: ${JSON.stringify([...session.enabledFeatures])}`);
-
-              // 請求參考空間
-              updateDebug("請求參考空間...");
-              const viewerSpace = await session.requestReferenceSpace("viewer");
-              localSpace = await session.requestReferenceSpace("local");
-              updateDebug("參考空間獲取成功");
-              
-              // 請求 hit-test source
-              updateDebug("請求 hit-test source...");
-              hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-              updateDebug("Hit-test source 創建成功");
-              
-              updateStatus("平面偵測已啟用");
-
-              // Session 結束處理
-              session.addEventListener("end", () => {
-                console.log("XR Session ended");
-                hitTestSource = null;
-                localSpace = null;
-                isSessionActive = false;
-                placed = false;
-                box.setAttribute("visible", false);
-                updateStatus("AR 會話已結束");
-                updateDebug("AR 會話結束");
-                startARBtn.style.display = 'block';
-                startARBtn.disabled = false;
-                startARBtn.textContent = "啟動 AR";
-                placeBtn.style.display = 'none';
-              });
-
-            } catch (error) {
-              console.error("Error setting up hit test:", error);
-              updateStatus("設置平面偵測時發生錯誤");
-              updateDebug(`設置錯誤: ${error.message}`);
-            }
-          });
-
-          // 渲染循環
-          this.el.sceneEl.renderer.setAnimationLoop((timestamp, frame) => {
-            if (!frame || !hitTestSource || !localSpace || !isSessionActive) {
-              return;
-            }
-
-            try {
-              const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-              if (hitTestResults.length > 0 && !placed) {
-                const pose = hitTestResults[0].getPose(localSpace);
+              if (pose) {
+                const position = pose.transform.position;
+                const quaternion = pose.transform.orientation;
                 
-                if (pose) {
-                  // 把方塊移到偵測到的位置
-                  const position = pose.transform.position;
-                  const quaternion = pose.transform.orientation;
-                  
-                  box.object3D.position.set(position.x, position.y, position.z);
-                  box.object3D.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
-                  
-                  if (!box.getAttribute("visible")) {
-                    box.setAttribute("visible", true);
-                    updateStatus("偵測到平面，點擊按鈕放置物件");
-                  }
+                box.object3D.position.set(position.x, position.y, position.z);
+                box.object3D.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+                
+                if (!box.getAttribute("visible")) {
+                  box.setAttribute("visible", true);
+                  updateStatus("偵測到平面！點擊放置物件");
                 }
               }
-            } catch (error) {
-              console.error("Hit test error:", error);
-              updateDebug(`Hit test 錯誤: ${error.message}`);
             }
-          });
+          } catch (error) {
+            updateDebug('渲染錯誤: ' + error.message);
+          }
+        }
 
-          // 點擊按鈕 → 固定物件
-          placeBtn.addEventListener("click", () => {
-            console.log("Place button clicked");
-            if (box.getAttribute("visible") && isSessionActive) {
-              placed = true;
-              updateStatus("物件已放置");
-              updateDebug(`物件放置於: ${JSON.stringify(box.object3D.position)}`);
-            } else {
-              updateStatus("無法放置物件 - 未偵測到平面");
-              updateDebug("放置失敗 - 物件不可見或會話未活躍");
-            }
-          });
+        if (xrSession) {
+          animationId = xrSession.requestAnimationFrame(render);
+        }
+      }
 
-          // A-Frame 事件監聽
-          sceneEl.addEventListener('enter-vr', () => {
-            console.log('Entering VR/AR mode');
-            updateDebug('A-Frame enter-vr 事件');
-          });
+      // 事件監聽器
+      startARBtn.addEventListener('click', startARSession);
 
-          sceneEl.addEventListener('exit-vr', () => {
-            console.log('Exiting VR/AR mode');
-            updateDebug('A-Frame exit-vr 事件');
-          });
+      placeBtn.addEventListener('click', () => {
+        if (box.getAttribute("visible") && isSessionActive) {
+          placed = true;
+          updateStatus("物件已放置！");
+          updateDebug('物件放置成功');
+        } else {
+          updateStatus("無法放置 - 未偵測到平面");
         }
       });
+
+      resetBtn.addEventListener('click', () => {
+        resetSession();
+      });
+
+      // 頁面載入時檢查環境
+      window.addEventListener('load', () => {
+        updateDebug('頁面載入完成');
+        setTimeout(checkEnvironment, 1000); // 延遲一秒確保 A-Frame 初始化完成
+      });
+
+      // A-Frame 場景載入完成
+      sceneEl.addEventListener('loaded', () => {
+        updateDebug('A-Frame 場景載入完成');
+      });
+
     </script>
   </body>
 </html>
