@@ -11,79 +11,193 @@
   </head>
   <body style="margin:0; overflow:hidden;">
     <!-- UI 層 (dom-overlay 用) -->
-    <div id="overlay" style="position: absolute; top: 10px; left: 10px; color: white; z-index: 999;">
-      <button id="placeBtn" style="padding: 10px; font-size: 16px;">放置物件</button>
+    <div id="overlay" style="position: absolute; top: 10px; left: 10px; color: white; z-index: 999; pointer-events: auto;">
+      <button id="placeBtn" style="padding: 10px; font-size: 16px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 5px;">放置物件</button>
+      <div id="status" style="margin-top: 10px; padding: 5px; background: rgba(0,0,0,0.5); border-radius: 3px;">
+        狀態: 初始化中...
+      </div>
     </div>
 
     <!-- A-Frame 場景 -->
     <a-scene
       vr-mode-ui="enabled: false"
       embedded
-      webxr="optionalFeatures: hit-test"
-      renderer="colorManagement: true"
-      ar-hit-test>
+      webxr="requiredFeatures: hit-test; optionalFeatures: dom-overlay; overlayElement: #overlay"
+      renderer="colorManagement: true; antialias: true"
+      background="color: transparent"
+      ar-hit-test2>
       
       <!-- 會被放到平面的物件 (預設隱藏) -->
-      <a-box id="placedBox" color="tomato" depth="0.2" height="0.2" width="0.2" visible="false"></a-box>
+      <a-box 
+        id="placedBox" 
+        color="tomato" 
+        depth="0.2" 
+        height="0.2" 
+        width="0.2" 
+        visible="false"
+        shadow="cast: true; receive: false">
+      </a-box>
+      
+      <!-- 添加環境光和方向光 -->
+      <a-light type="ambient" color="#404040" intensity="0.4"></a-light>
+      <a-light type="directional" position="1 1 1" color="#ffffff" intensity="0.6" shadow="cast: true"></a-light>
       
       <a-camera></a-camera>
     </a-scene>
 
     <script>
-      AFRAME.registerComponent("ar-hit-test", {
+      AFRAME.registerComponent("ar-hit-test2", {
         init: function () {
+          console.log("AR Hit Test component initialized");
+          
           const sceneEl = this.el;
           const box = document.getElementById("placedBox");
           const placeBtn = document.getElementById("placeBtn");
+          const statusDiv = document.getElementById("status");
 
           let hitTestSource = null;
           let localSpace = null;
           let placed = false;
+          let isSessionActive = false;
 
-          sceneEl.renderer.xr.addEventListener("sessionstart", async () => {
-            const session = sceneEl.renderer.xr.getSession();
+          // 更新狀態顯示
+          function updateStatus(message) {
+            if (statusDiv) {
+              statusDiv.textContent = "狀態: " + message;
+            }
+            console.log("Status:", message);
+          }
 
-            // 請求 hit-test source
-            const viewerSpace = await session.requestReferenceSpace("viewer");
-            hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
-            localSpace = await session.requestReferenceSpace("local");
+          // 檢查 WebXR 支援
+          if (!navigator.xr) {
+            updateStatus("WebXR 不支援");
+            return;
+          }
 
-            session.addEventListener("end", () => {
-              hitTestSource = null;
-              localSpace = null;
-            });
+          // 檢查 AR 支援
+          navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+            if (supported) {
+              updateStatus("AR 支援，等待啟動...");
+            } else {
+              updateStatus("AR 不支援");
+            }
+          }).catch(err => {
+            updateStatus("檢查 AR 支援時發生錯誤");
+            console.error("AR support check error:", err);
           });
 
+          // Session 開始事件
+          sceneEl.renderer.xr.addEventListener("sessionstart", async () => {
+            console.log("XR Session started");
+            updateStatus("AR 會話已啟動");
+            isSessionActive = true;
+            
+            try {
+              const session = sceneEl.renderer.xr.getSession();
+              console.log("Session features:", session.enabledFeatures);
+
+              // 請求參考空間
+              const viewerSpace = await session.requestReferenceSpace("viewer");
+              localSpace = await session.requestReferenceSpace("local");
+              
+              // 請求 hit-test source
+              hitTestSource = await session.requestHitTestSource({ space: viewerSpace });
+              
+              updateStatus("平面偵測已啟用");
+              console.log("Hit test source created successfully");
+
+              // Session 結束處理
+              session.addEventListener("end", () => {
+                console.log("XR Session ended");
+                hitTestSource = null;
+                localSpace = null;
+                isSessionActive = false;
+                updateStatus("AR 會話已結束");
+              });
+
+            } catch (error) {
+              console.error("Error setting up hit test:", error);
+              updateStatus("設置平面偵測時發生錯誤: " + error.message);
+            }
+          });
+
+          // Session 結束事件
           sceneEl.renderer.xr.addEventListener("sessionend", () => {
+            console.log("XR Session ended (event)");
             placed = false;
             box.setAttribute("visible", false);
+            isSessionActive = false;
+            updateStatus("AR 會話已結束");
           });
 
+          // 渲染循環
           this.el.sceneEl.renderer.setAnimationLoop((timestamp, frame) => {
-            if (!frame || !hitTestSource || placed) return;
+            if (!frame || !hitTestSource || !localSpace || !isSessionActive) {
+              return;
+            }
 
-            const referenceSpace = localSpace;
-            const hitTestResults = frame.getHitTestResults(hitTestSource);
+            try {
+              const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-            if (hitTestResults.length > 0) {
-              const pose = hitTestResults[0].getPose(referenceSpace);
-
-              // 把方塊移到偵測到的位置
-              box.object3D.position.set(
-                pose.transform.position.x,
-                pose.transform.position.y,
-                pose.transform.position.z
-              );
-              box.setAttribute("visible", true);
+              if (hitTestResults.length > 0 && !placed) {
+                const pose = hitTestResults[0].getPose(localSpace);
+                
+                if (pose) {
+                  // 把方塊移到偵測到的位置
+                  const position = pose.transform.position;
+                  const quaternion = pose.transform.orientation;
+                  
+                  box.object3D.position.set(position.x, position.y, position.z);
+                  box.object3D.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+                  
+                  if (!box.getAttribute("visible")) {
+                    box.setAttribute("visible", true);
+                    updateStatus("偵測到平面，點擊按鈕放置物件");
+                  }
+                }
+              }
+            } catch (error) {
+              console.error("Hit test error:", error);
             }
           });
 
           // 點擊按鈕 → 固定物件
           placeBtn.addEventListener("click", () => {
-            if (box.getAttribute("visible")) {
+            console.log("Place button clicked");
+            if (box.getAttribute("visible") && isSessionActive) {
               placed = true;
+              updateStatus("物件已放置");
+              console.log("Object placed at:", box.object3D.position);
+            } else {
+              updateStatus("無法放置物件 - 未偵測到平面");
             }
           });
+
+          // 錯誤處理
+          sceneEl.addEventListener('enter-vr', () => {
+            console.log('Entering VR/AR mode');
+          });
+
+          sceneEl.addEventListener('exit-vr', () => {
+            console.log('Exiting VR/AR mode');
+          });
+        }
+      });
+
+      // 頁面載入完成後的額外檢查
+      window.addEventListener('load', () => {
+        console.log('Page loaded, checking WebXR support...');
+        
+        if (navigator.xr) {
+          navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+            console.log('AR supported:', supported);
+            if (!supported) {
+              document.getElementById('status').textContent = '狀態: 此設備不支援 AR';
+            }
+          });
+        } else {
+          console.log('WebXR not supported');
+          document.getElementById('status').textContent = '狀態: 此瀏覽器不支援 WebXR';
         }
       });
     </script>
