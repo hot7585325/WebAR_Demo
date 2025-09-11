@@ -36,11 +36,11 @@
     // cdn方式
     import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
     import { ARButton } from 'https://unpkg.com/three@0.180.0/examples/jsm/webxr/ARButton.js';
-    // import { GLTFLoader } from 'https://unpkg.com/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+    import { GLTFLoader } from 'https://unpkg.com/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 
 
     // js方式
-    import { GLTFLoader } from '../src/js/GLTFLoader.js';
+    // import { GLTFLoader } from '../src/js/GLTFLoader.js';
 
     // npm方式
     // import * as THREE from 'three';
@@ -86,24 +86,24 @@
       document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
 
       //換模型
-      // const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
-      const loader = new GLTFLoader();
+      const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
+      // const loader = new GLTFLoader();
 
       function onSelect() {
         if (reticle.visible) {
 
 
-          // const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-          // const mesh = new THREE.Mesh(geometry, material);
-          // reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-          // mesh.scale.y = Math.random() * 2 + 1;
-          // scene.add(mesh);
+          const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
+          const mesh = new THREE.Mesh(geometry, material);
+          reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
+          mesh.scale.y = Math.random() * 2 + 1;
+          scene.add(mesh);
 
-          loader.load('src\model\ar_hotpoint.glb', function (gltf) {
-            const model = gltf.scene;
-            reticle.matrix.decompose(model.position, model.quaternion, model.scale);
-            scene.add(model);
-          });
+          // loader.load('src\model\ar_hotpoint.glb', function (gltf) {
+          //   const model = gltf.scene;
+          //   reticle.matrix.decompose(model.position, model.quaternion, model.scale);
+          //   scene.add(model);
+          // });
         }
       }
 
