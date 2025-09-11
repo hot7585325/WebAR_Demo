@@ -31,19 +31,15 @@
 <body>
   <!-- DOM區域 -->
   <div id="ButtonPanel">
+    <div class="CustomBtn" id="start-ar">
+      <p id="Ani_text">啟動 AR 模式</p>
+    </div>
     <div class="CustomBtn" id="Home_button">
       <p id="Home_text">返回主選單</p>
     </div>
-
   </div>
 
-
-    <a href="src\model\ar_hotpoint.usdz" rel="ar">
-        <span>點擊這裡，在 AR 中查看模型</span>
-    </a>
   <!-- DOM依賴腳本  -->
-  <script >
-  document.getElementById("Home_button").addEventListener("click", function () {window.location.href='index.html' })
-</script>
+  <script src="src\js\PlaneTrackindMode.js"> </script>
 </body>
 </html>

@@ -1,81 +1,217 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- aframe CDN -->
-  <!-- <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script> -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.7.0/aframe.min.js"
-    integrity="sha512-QRe0tMdbQUsh9BJOh+ijnsJaLoO68ku2a9/7HmQCIvqpeWRkqc4Ee0Ohjvt6y7Fx/ShFTLoL/H3ZgxZrXB7ERA=="
-    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-
-  <!-- glb動畫 CDN -->
-  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.6.0/dist/aframe-extras.min.js"></script>
-
-  <!-- 自製組件 -->
-  <script src="src\js\opa-ctrl.js"> </script>
+  <title>three.js ar - hit test</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <link rel="stylesheet" href="src\css\styles_P.css">
 
+  <!-- 網頁用Console -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
+  <script>  var vConsole = new VConsole();  </script>
+  <style>
+    body {
+      background-color: #bbbbbb;
+      text-align: center;
+    }
+
+    #text_info {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
 </head>
 
 <body>
-
+  </div>
   <!-- DOM區域 -->
   <div id="ButtonPanel">
+    <div class="CustomBtn" id="start-ar">
+      <p id="Ani_text">啟動 AR 模式</p>
+    </div>
     <div class="CustomBtn" id="Home_button">
       <p id="Home_text">返回主選單</p>
     </div>
-    <div class="CustomBtn" id="Ani_button">
-      <p id="Ani_text">動畫播放</p>
-    </div>
-    <div class="CustomBtn" id="Name_button">
-      <p id="Name_text">名稱顯示</p>
-    </div>
   </div>
 
+  <script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+					"three/addons/": "./jsm/"
+				}
+			}
+		</script>
 
-  <div class="MeshInfo" id="DOMCanvas">
-    <!-- <img id="scan" src="src\image\scan.png"> -->
-    <div id="Discripts"><img src="src\image\Discripts.png"> </div>
+  <script type="module">
 
-    <div id="info_Panel">
-      <img class="info_image" id="info_1" src="src\image\info_1.png">
-      <img class="info_image" id="info_2" src="src\image\info_2.png">
-      <img class="info_image" id="info_3" src="src\image\info_3.png">
-      <img class="info_image" id="info_4" src="src\image\info_4.png">
-      <img class="info_image" id="info_5" src="src\image\info_5.png">
-      <img class="info_image" id="info_6" src="src\image\info_6.png">
-      <div id="info_button"><img src="src\image\btn_enter.png"></div>
-    </div>
-  </div>
-
-
-  <!-- 平面偵測SCENE -->
-  <!-- <a-scene xr-mode="immersive-ar" webxr="optionalFeatures: hit-test;" vr-mode-ui="enabled: true" embedded> -->
-  <a-scene
-    webxr="requiredFeatures: hit-test, local-floor; optionalFeatures: dom-overlay, unbounded; overlayElement: #overlay;"
-    xr-mode-ui="enabled: true;">
-
-    <!-- 3D模型 -->
-    <a-entity touch-drag-rotate-scale="rotationCoordinate:world">
-      <a-gltf-model src="src\model\ar_hotpoint.glb" active-ani="src:*"></a-gltf-model>
-    </a-entity>
-
-    <!-- 攝影機 -->
-    <a-camera position="0 0 .2" look-controls-enabled="false" ray-interactive="objclass: .recive-ray"></a-camera>
-  </a-scene>
+    // cdn
+    import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
+    import { ARButton } from 'https://unpkg.com/three@0.180.0/examples/jsm/webxr/ARButton.js';
+    // import { GLTFLoader } from 'https://unpkg.com/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 
 
+    // js
+    import { GLTFLoader } from '../src/js/GLTFLoader.js';
+
+    // npm
+    // import * as THREE from 'three';
+    // import { ARButton } from 'three/addons/webxr/ARButton.js';
+    // import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 
+    let container;
+    let camera, scene, renderer;
+    let controller1, controller2;
+
+    let reticle;
+
+    let hitTestSource = null;
+    let hitTestSourceRequested = false;
 
 
-  <!-- DOM依賴腳本  -->
-  <script src="src\js\main.js"> </script>
-   <script src="src\js\PlaneTrackindMode.js"> </script>
+    init();
+
+    function init() {
+
+      container = document.createElement('div');
+      document.body.appendChild(container);
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
+      light.position.set(0.5, 1, 0.25);
+      scene.add(light);
+
+      //ar渲染模式
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setAnimationLoop(animate);
+      renderer.xr.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      //應該是可以替換的按鈕
+
+      document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+
+      //換模型
+      // const geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.2, 32 ).translate( 0, 0.1, 0 );
+      const loader = new GLTFLoader();
+
+      function onSelect() {
+        if (reticle.visible) {
+
+
+          // const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
+          // const mesh = new THREE.Mesh(geometry, material);
+          // reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
+          // mesh.scale.y = Math.random() * 2 + 1;
+          // scene.add(mesh);
+
+          loader.load('src\model\ar_hotpoint.glb', function (gltf) {
+            const model = gltf.scene;
+            reticle.matrix.decompose(model.position, model.quaternion, model.scale);
+            scene.add(model);
+          });
+        }
+      }
+
+      controller1 = renderer.xr.getController(0);
+      controller1.addEventListener('select', onSelect);
+      scene.add(controller1);
+
+      controller2 = renderer.xr.getController(1);
+      controller2.addEventListener('select', onSelect);
+      scene.add(controller2);
+
+      reticle = new THREE.Mesh(
+        new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
+        new THREE.MeshBasicMaterial()
+      );
+      reticle.matrixAutoUpdate = false;
+      reticle.visible = false;
+      scene.add(reticle);
+
+      //
+
+      window.addEventListener('resize', onWindowResize);
+
+    }
+
+    function onWindowResize() {
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+    }
+
+    //
+
+    function animate(timestamp, frame) {
+
+      if (frame) {
+
+        const referenceSpace = renderer.xr.getReferenceSpace();
+        const session = renderer.xr.getSession();
+
+        if (hitTestSourceRequested === false) {
+
+          session.requestReferenceSpace('viewer').then(function (referenceSpace) {
+
+            session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
+
+              hitTestSource = source;
+
+            });
+
+          });
+
+          session.addEventListener('end', function () {
+
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+
+          });
+
+          hitTestSourceRequested = true;
+
+        }
+
+        if (hitTestSource) {
+
+          const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+          if (hitTestResults.length) {
+
+            const hit = hitTestResults[0];
+
+            reticle.visible = true;
+            reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+
+          } else {
+
+            reticle.visible = false;
+
+          }
+
+        }
+
+      }
+
+      renderer.render(scene, camera);
+
+    }
+
+  </script>
+  <script src="src\js\PlaneTrackindMode.js"> </script>
+
 </body>
 
 </html>

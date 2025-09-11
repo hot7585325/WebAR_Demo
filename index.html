@@ -1,35 +1,56 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
   <meta charset="UTF-8">
-  <title>選擇 AR 模式</title>
+  <title>WebAR研究</title>
   <style>
     body {
       font-family: sans-serif;
       text-align: center;
       padding-top: 100px;
-      background: #f0f0f0;
+      background: #383838;
     }
+
     button {
-      font-size: 1.2em;
+      font-size: 2em;
       padding: 15px 30px;
       margin: 20px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
+      background-color: #ffbb00;
+      color: rgb(0, 0, 0);
     }
+
     button:hover {
-      background-color: #45a049;
+      background-color: #916a17;
     }
+
+    .btnBox {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .text_info
+    {
+      color: #ffffff;
+      font-size: 5em;
+    }
+
+
   </style>
 </head>
+
 <body>
-  <h1>請選擇 AR 模式</h1>
-  <button onclick="window.location.href='imageTracking.html'">圖像偵測模式</button>
-  <!-- <button onclick="window.location.href='PlaneTracking_Android.html'">平面偵測(Android)</button> -->
-     <button onclick="window.location.href='test.html'">平面偵測(Android)</button>
-  <button onclick="window.location.href='PlaneTracking_ios.html'">平面偵測(ios)</button>
+  <h1 class="text_info">平面偵測</h1>
+  <div class="btnBox">
+    <!-- <button onclick="window.location.href='imageTracking.html'">圖像偵測模式</button> -->
+    <!-- <button  onclick="window.location.href='PlaneTracking_Android.html'">平面偵測(Android)</button> -->
+    <button onclick="window.location.href='test.html'">平面偵測(Android)</button>
+    <button onclick="window.location.href='PlaneTracking_ios.html'">平面偵測(ios)</button>
+  </div>
 </body>
+
 </html>
