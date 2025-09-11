@@ -28,12 +28,19 @@
 
   <script type="module">
 
-    // import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
-    // import { ARButton } from 'https://unpkg.com/three@0.180.0/examples/jsm/webxr/ARButton.js';
+    // cdn
+    import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
+    import { ARButton } from 'https://unpkg.com/three@0.180.0/examples/jsm/webxr/ARButton.js';
     // import { GLTFLoader } from 'https://unpkg.com/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-    import * as THREE from 'three';
-    import { ARButton } from 'three/addons/webxr/ARButton.js';
-    import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+
+    // js
+    import { GLTFLoader } from '../src/js/GLTFLoader.js';
+
+    // npm
+    // import * as THREE from 'three';
+    // import { ARButton } from 'three/addons/webxr/ARButton.js';
+    // import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 
     let container;
@@ -90,7 +97,8 @@
           loader.load('src\model\ar_hotpoint.glb', function (gltf) {
             const model = gltf.scene;
             reticle.matrix.decompose(model.position, model.quaternion, model.scale);
-            scene.add(model);});
+            scene.add(model);
+          });
         }
       }
 
