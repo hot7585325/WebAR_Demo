@@ -33,24 +33,42 @@
       flex-direction: column;
     }
 
-    .text_info
-    {
+    .text_info {
       color: #ffffff;
       font-size: 5em;
     }
-
-
   </style>
 </head>
 
 <body>
-  <h1 class="text_info">平面偵測</h1>
+  <h1 class="text_info">WebAR測試</h1>
   <div class="btnBox">
-    <!-- <button onclick="window.location.href='imageTracking.html'">圖像偵測模式</button> -->
-    <!-- <button  onclick="window.location.href='PlaneTracking_Android.html'">平面偵測(Android)</button> -->
-    <button onclick="window.location.href='test.html'">平面偵測(Android)</button>
-    <button onclick="window.location.href='PlaneTracking_ios.html'">平面偵測(ios)</button>
+    <button onclick="window.location.href='imageTracking.html'">圖像偵測模式</button>
+    <!-- <button onclick="window.location.href='PlaneTracking_ios.html'">平面偵測(ios)</button>
+    <button onclick="window.location.href='PlaneTracking_Android.html'">平面偵測(Android)</button>
+    <button onclick="window.location.href='test.html'">平面偵測(Android)</button> -->
+
+    <button id="SwitchDeviceButton">平面偵測模式</button>
   </div>
 </body>
+
+
+
+<script>
+  document.querySelector("#SwitchDeviceButton").addEventListener("click", SwitchDevice)
+  function SwitchDevice() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+      // iOS 裝置
+      window.location.href = "PlaneTracking_ios.html";
+    } else if (/android/i.test(ua)) {
+      // Android 裝置
+      window.location.href = "test.html";
+    } else {
+      // 其他裝置（例如 PC）
+      alert("此裝置不適用")
+    }
+  }
+</script>
 
 </html>
