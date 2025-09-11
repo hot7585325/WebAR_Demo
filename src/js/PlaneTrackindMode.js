@@ -7,7 +7,7 @@ document.getElementById('start-ar').addEventListener('click', async () => {
 
     renderer.xr.setSession(session);
   } else {
-    alert('你的裝置不支援 WebXR AR 模式');
+    alert('你的裝置不支援 WebXR AR 模式，啟用QuickLook');
   }
 });
 
