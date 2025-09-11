@@ -28,7 +28,7 @@
   </div>
   <!-- DOM區域 -->
   <div id="ButtonPanel">
-    <div class="CustomBtn" id="start-ar">
+    <div class="CustomBtn" id="start-ar2">
       <p id="Ani_text">啟動 AR 模式</p>
     </div>
     <div class="CustomBtn" id="Home_button">
@@ -100,7 +100,7 @@
       document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
 
       //換模型
-      const geometry = new THREE.CylinderGeometry( 0.1, 0.1, 0.2, 32 ).translate( 0, 0.1, 0 );
+      const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
       // const loader = new GLTFLoader();
 
       function onSelect() {
@@ -212,6 +212,19 @@
   </script>
   <script src="src\js\PlaneTrackindMode.js"> </script>
 
-</body>
+  <!-- <script>
+    document.getElementById('start-ar2').addEventListener('click', async () => {
+      if (navigator.xr) {
+        const session = await navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['hit-test']
+        });
 
+        renderer.xr.setSession(session);
+      } else {
+        alert('你的裝置不支援 WebXR AR 模式，啟用QuickLook');
+      }
+    });
+  </script> -->
+
+</body>
 </html>
