@@ -64,7 +64,7 @@ async function SwitchDevice() {
       try {
         const supported = await navigator.xr.isSessionSupported('immersive-ar');
         if (supported) {
-          window.location.href = "test.html"; // Android → WebXR
+          window.location.href = "PlaneTracking_Android.html"; // Android → WebXR
           return;
         }
       } catch (e) {
