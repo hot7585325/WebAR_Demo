@@ -12,4 +12,13 @@ document.getElementById('start-ar').addEventListener('click', async () => {
 });
 
 
+navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+  if (supported) {
+    console.log("支援 immersive-ar");
+  } else {
+    console.warn("不支援 immersive-ar");
+  }
+});
+
+
   document.getElementById("Home_button").addEventListener("click", function () {window.location.href='index.html' })
