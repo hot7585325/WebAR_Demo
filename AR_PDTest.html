@@ -1,263 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
+	<head>
+		<title>three.js ar - GLTF model placement</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				overflow: hidden;
+			}
+			
+			#info {
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+			}
+			
+			a {
+				color: #f00;
+			}
+			
+			#status {
+				position: absolute;
+				top: 60px;
+				left: 10px;
+				z-index: 100;
+				background: rgba(0,0,0,0.7);
+				padding: 10px;
+				border-radius: 5px;
+				font-size: 14px;
+			}
+		</style>
+	</head>
+	<body>
 
-<head>
-    <title>three.js ar - GLTF model placement</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <style>
-        body {
-            font-family: Monospace;
-            background-color: #000;
-            color: #fff;
-            margin: 0px;
-            overflow: hidden;
-        }
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> ar - GLTF model placement<br/>
+			點擊螢幕在偵測到的平面上放置 3D 模型
+		</div>
 
-        #info {
-            position: absolute;
-            top: 10px;
-            width: 100%;
-            text-align: center;
-            z-index: 100;
-            display: block;
-        }
+		<div id="status">載入中...</div>
 
-        a {
-            color: #f00;
-        }
+		<!-- VConsole for debugging -->
+		<script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+		<script>
+			var vConsole = new window.VConsole();
+			console.log('VConsole initialized');
+		</script>
 
-        #modelUrl {
-            position: absolute;
-            top: 60px;
-            left: 10px;
-            z-index: 100;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border-radius: 5px;
-        }
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-        #modelUrl input {
-            width: 300px;
-            padding: 5px;
-            margin: 5px 0;
-        }
+		<script type="module">
+			// Import modules from CDN
+			import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+			import { ARButton } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/webxr/ARButton.js';
 
-        #modelUrl button {
-            padding: 5px 10px;
-            background: #007acc;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
+			console.log('Modules imported successfully');
 
-        #modelUrl button:hover {
-            background: #005a9c;
-        }
-    </style>
-    <!-- 網頁用Console -->
-    <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
-    <script>  var vConsole = new VConsole();  </script>
-</head>
+			let container;
+			let camera, scene, renderer;
+			let controller1, controller2;
+			let reticle;
+			let hitTestSource = null;
+			let hitTestSourceRequested = false;
+			
+			// GLTF related variables
+			let gltfLoader;
+			let loadedModel = null;
+			let isModelLoaded = false;
 
-<body>
+			// 在這裡修改您的 GLTF 模型 URL
+			const GLTF_MODEL_URL = 'src\model\ar_hotpoint.glb';
+			// 其他範例:
+			// const GLTF_MODEL_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf';
+			// const GLTF_MODEL_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Avocado/glTF/Avocado.gltf';
 
-    <div id="info">
-        <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> ar - GLTF model placement<br />
-        點擊螢幕在偵測到的平面上放置 3D 模型
-    </div>
+			init();
 
-    <div id="modelUrl">
-        <div>GLTF 模型 URL:</div>
-        <input type="text" id="gltfInput"
-            value="https://threejs.org/examples/models/gltf/DamagedHelmet/DamagedHelmet.gltf" />
-        <br>
-        <button onclick="loadModel()">載入模型</button>
-        <div id="status" style="margin-top: 10px; font-size: 12px;">準備載入模型...</div>
-    </div>
+			function updateStatus(message, color = 'white') {
+				const statusDiv = document.getElementById('status');
+				statusDiv.textContent = message;
+				statusDiv.style.color = color;
+				console.log('Status:', message);
+			}
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+			function init() {
+				console.log('Initializing AR scene...');
+				
+				container = document.createElement('div');
+				document.body.appendChild(container);
 
-    <script type="module">
-        // Import GLTFLoader from CDN
-        import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
-        import { ARButton } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/webxr/ARButton.js';
+				scene = new THREE.Scene();
 
-        let container;
-        let camera, scene, renderer;
-        let controller1, controller2;
-        let reticle;
-        let hitTestSource = null;
-        let hitTestSourceRequested = false;
+				camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
-        // GLTF related variables
-        let gltfLoader;
-        let currentModel = null;
-        let modelScale = 1;
+				// Lighting setup
+				const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+				scene.add(ambientLight);
 
-        init();
+				const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+				directionalLight.position.set(0, 1, 1);
+				directionalLight.castShadow = true;
+				scene.add(directionalLight);
 
-        function init() {
-            container = document.createElement('div');
-            document.body.appendChild(container);
+				const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.3);
+				scene.add(hemisphereLight);
 
-            scene = new THREE.Scene();
+				renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				renderer.setAnimationLoop(animate);
+				renderer.xr.enabled = true;
+				renderer.outputEncoding = THREE.sRGBEncoding;
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				container.appendChild(renderer.domElement);
 
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+				// Create AR Button
+				const arButton = ARButton.createButton(renderer, { 
+					requiredFeatures: ['hit-test'],
+					optionalFeatures: ['dom-overlay'],
+					domOverlay: { root: document.body }
+				});
+				document.body.appendChild(arButton);
 
-            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
-            light.position.set(0.5, 1, 0.25);
-            scene.add(light);
+				// Initialize GLTF loader
+				gltfLoader = new GLTFLoader();
+				console.log('GLTFLoader initialized');
 
-            // Add directional light for better model visibility
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-            dirLight.position.set(0, 1, 1);
-            scene.add(dirLight);
+				function onSelect() {
+					console.log('Select event triggered');
+					console.log('Reticle visible:', reticle.visible);
+					console.log('Model loaded:', isModelLoaded);
+					console.log('Loaded model:', loadedModel);
+					
+					if (reticle.visible && isModelLoaded && loadedModel) {
+						console.log('Placing model...');
+						
+						try {
+							// Clone the loaded model
+							const modelClone = loadedModel.clone();
+							console.log('Model cloned successfully');
+							
+							// Get position from reticle
+							const position = new THREE.Vector3();
+							const quaternion = new THREE.Quaternion();
+							const scale = new THREE.Vector3();
+							reticle.matrix.decompose(position, quaternion, scale);
+							
+							console.log('Reticle position:', position);
+							
+							// Set position and rotation
+							modelClone.position.copy(position);
+							modelClone.quaternion.copy(quaternion);
+							
+							// Set appropriate scale
+							modelClone.scale.setScalar(0.5);
+							
+							// Add to scene
+							scene.add(modelClone);
+							console.log('Model added to scene');
+							
+							updateStatus(`模型已放置! 場景中共有 ${scene.children.length} 個物件`, 'lightgreen');
+							
+						} catch (error) {
+							console.error('Error placing model:', error);
+							updateStatus('放置模型時發生錯誤', 'red');
+						}
+					} else {
+						console.log('Cannot place model - conditions not met');
+						if (!reticle.visible) console.log('- Reticle not visible');
+						if (!isModelLoaded) console.log('- Model not loaded');
+						if (!loadedModel) console.log('- No loaded model available');
+					}
+				}
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setAnimationLoop(animate);
-            renderer.xr.enabled = true;
-            renderer.outputEncoding = THREE.sRGBEncoding;
-            container.appendChild(renderer.domElement);
+				controller1 = renderer.xr.getController(0);
+				controller1.addEventListener('select', onSelect);
+				scene.add(controller1);
 
-            document.body.appendChild(ARButton.createButton(renderer, {
-                requiredFeatures: ['hit-test'],
-                optionalFeatures: ['dom-overlay'],
-                domOverlay: { root: document.body }
-            }));
+				controller2 = renderer.xr.getController(1);
+				controller2.addEventListener('select', onSelect);
+				scene.add(controller2);
 
-            // Initialize GLTF loader
-            gltfLoader = new GLTFLoader();
+				// Create reticle (targeting circle)
+				reticle = new THREE.Mesh(
+					new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
+					new THREE.MeshBasicMaterial({ 
+						color: 0x00ff00, 
+						transparent: true, 
+						opacity: 0.7,
+						side: THREE.DoubleSide
+					})
+				);
+				reticle.matrixAutoUpdate = false;
+				reticle.visible = false;
+				scene.add(reticle);
+				console.log('Reticle created');
 
-            function onSelect() {
-                if (reticle.visible && currentModel) {
-                    // Clone the loaded model
-                    const modelClone = currentModel.clone();
+				window.addEventListener('resize', onWindowResize);
 
-                    // Set position from reticle
-                    reticle.matrix.decompose(modelClone.position, modelClone.quaternion, modelClone.scale);
+				// Load the GLTF model
+				loadGLTFModel();
+			}
 
-                    // Apply scale
-                    modelClone.scale.multiplyScalar(modelScale);
+			function loadGLTFModel() {
+				console.log('Loading GLTF model from:', GLTF_MODEL_URL);
+				updateStatus('載入模型中...', 'yellow');
 
-                    // Add random rotation around Y axis
-                    modelClone.rotation.y = Math.random() * Math.PI * 2;
+				gltfLoader.load(
+					GLTF_MODEL_URL,
+					function(gltf) {
+						console.log('GLTF loaded successfully:', gltf);
+						
+						loadedModel = gltf.scene;
+						isModelLoaded = true;
+						
+						// Get model bounding box for scaling reference
+						const box = new THREE.Box3().setFromObject(loadedModel);
+						const size = box.getSize(new THREE.Vector3());
+						const maxDimension = Math.max(size.x, size.y, size.z);
+						
+						console.log('Model size:', size);
+						console.log('Max dimension:', maxDimension);
+						
+						updateStatus(`模型載入成功! 準備放置`, 'lightgreen');
+						
+						// Traverse and log model structure
+						loadedModel.traverse((child) => {
+							if (child.isMesh) {
+								console.log('Mesh found:', child.name, child.geometry, child.material);
+							}
+						});
+						
+					},
+					function(progress) {
+						const percent = (progress.loaded / progress.total * 100) || 0;
+						console.log('Loading progress:', percent + '%');
+						updateStatus(`載入中... ${percent.toFixed(1)}%`, 'yellow');
+					},
+					function(error) {
+						console.error('Error loading GLTF:', error);
+						updateStatus('模型載入失敗!', 'red');
+						isModelLoaded = false;
+					}
+				);
+			}
 
-                    scene.add(modelClone);
-                }
-            }
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+			}
 
-            controller1 = renderer.xr.getController(0);
-            controller1.addEventListener('select', onSelect);
-            scene.add(controller1);
+			function animate(timestamp, frame) {
+				if (frame) {
+					const referenceSpace = renderer.xr.getReferenceSpace();
+					const session = renderer.xr.getSession();
 
-            controller2 = renderer.xr.getController(1);
-            controller2.addEventListener('select', onSelect);
-            scene.add(controller2);
+					if (hitTestSourceRequested === false) {
+						session.requestReferenceSpace('viewer').then(function(referenceSpace) {
+							session.requestHitTestSource({ space: referenceSpace }).then(function(source) {
+								hitTestSource = source;
+								console.log('Hit test source acquired');
+							});
+						});
 
-            reticle = new THREE.Mesh(
-                new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
-                new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 })
-            );
-            reticle.matrixAutoUpdate = false;
-            reticle.visible = false;
-            scene.add(reticle);
+						session.addEventListener('end', function() {
+							hitTestSourceRequested = false;
+							hitTestSource = null;
+							console.log('AR session ended');
+						});
 
-            window.addEventListener('resize', onWindowResize);
+						hitTestSourceRequested = true;
+					}
 
-            // Load default model
-            loadModel();
-        }
+					if (hitTestSource) {
+						const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
+						if (hitTestResults.length) {
+							const hit = hitTestResults[0];
+							reticle.visible = true;
+							reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+						} else {
+							reticle.visible = false;
+						}
+					}
+				}
 
-        // Global function to load GLTF model
-        window.loadModel = function () {
-            // const url = document.getElementById('gltfInput').value;
-            const url = "src\model\ar_hotpoint.glb";
-            const statusDiv = document.getElementById('status');
+				renderer.render(scene, camera);
+			}
 
-            statusDiv.textContent = '載入中...';
-            statusDiv.style.color = 'yellow';
+			// Add click event for non-XR testing
+			window.addEventListener('click', function(event) {
+				if (!renderer.xr.isPresenting) {
+					console.log('Click event (non-XR mode)');
+					// For testing outside AR
+				}
+			});
 
-            gltfLoader.load(
-                url,
-                function (gltf) {
-                    // Remove previous model if exists
-                    if (currentModel) {
-                        scene.remove(currentModel);
-                    }
-
-                    currentModel = gltf.scene;
-
-                    // Calculate appropriate scale based on model size
-                    const box = new THREE.Box3().setFromObject(currentModel);
-                    const size = box.getSize(new THREE.Vector3());
-                    const maxDimension = Math.max(size.x, size.y, size.z);
-                    modelScale = 0.5 / maxDimension; // Scale to reasonable size
-
-                    statusDiv.textContent = `模型載入成功! 尺寸: ${maxDimension.toFixed(2)}`;
-                    statusDiv.style.color = 'lightgreen';
-
-                    console.log('Model loaded successfully');
-                },
-                function (progress) {
-                    console.log('Loading progress:', progress);
-                    const percent = (progress.loaded / progress.total * 100) || 0;
-                    statusDiv.textContent = `載入中... ${percent.toFixed(1)}%`;
-                },
-                function (error) {
-                    console.error('Error loading model:', error);
-                    statusDiv.textContent = '載入失敗! 請檢查 URL 是否正確';
-                    statusDiv.style.color = 'red';
-                }
-            );
-        };
-
-        function animate(timestamp, frame) {
-            if (frame) {
-                const referenceSpace = renderer.xr.getReferenceSpace();
-                const session = renderer.xr.getSession();
-
-                if (hitTestSourceRequested === false) {
-                    session.requestReferenceSpace('viewer').then(function (referenceSpace) {
-                        session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
-                            hitTestSource = source;
-                        });
-                    });
-
-                    session.addEventListener('end', function () {
-                        hitTestSourceRequested = false;
-                        hitTestSource = null;
-                    });
-
-                    hitTestSourceRequested = true;
-                }
-
-                if (hitTestSource) {
-                    const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-                    if (hitTestResults.length) {
-                        const hit = hitTestResults[0];
-                        reticle.visible = true;
-                        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-                    } else {
-                        reticle.visible = false;
-                    }
-                }
-            }
-
-            renderer.render(scene, camera);
-        }
-
-    </script>
-</body>
-
+		</script>
+	</body>
 </html>
