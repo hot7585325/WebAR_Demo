@@ -99,33 +99,30 @@
       const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
       // const loader = new GLTFLoader();
 
-      function onSelect() {
-        if (reticle.visible) {
+      async function onSelect() {
+        if (!reticle.visible) return;
 
-
-          // const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-          // const mesh = new THREE.Mesh(geometry, material);
-          // reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-          // mesh.scale.y = Math.random() * 2 + 1;
-          // scene.add(mesh);
-
-
-          let GLTFLoader;
-
-          async function loadModel() {
-            if (!GLTFLoader) {
-              const module = await import('https://unpkg.com/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
-              GLTFLoader = module.GLTFLoader;
-            }
-
-            const loader = new GLTFLoader();
-            loader.load('src/model/ar_hotpoint.glb', function (gltf) {
-              const model = gltf.scene;
-              reticle.matrix.decompose(model.position, model.quaternion, model.scale);
-              scene.add(model);
-            });
-          }
+        if (!GLTFLoader) {
+          const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
+          GLTFLoader = module.GLTFLoader;
         }
+
+        const loader = new GLTFLoader();
+        loader.load(
+          'src/model/ar_hotpoint.glb',
+          function (gltf) {
+            const model = gltf.scene;
+            model.position.setFromMatrixPosition(reticle.matrix);
+            model.quaternion.setFromRotationMatrix(reticle.matrix);
+            model.scale.setScalar(1);
+            scene.add(model);
+            console.log('✅ 模型成功加入場景');
+          },
+          undefined,
+          function (error) {
+            console.error('❌ 模型載入失敗:', error);
+          }
+        );
       }
 
       controller1 = renderer.xr.getController(0);
