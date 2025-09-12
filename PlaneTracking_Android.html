@@ -99,31 +99,29 @@
       const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
       // const loader = new GLTFLoader();
 
-      async function onSelect() {
-        if (!reticle.visible) return;
+  async function onSelect() {
+  if (!reticle.visible) return;
 
-        if (!GLTFLoader) {
-          const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
-          GLTFLoader = module.GLTFLoader;
-        }
+  const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
+  const GLTFLoader = module.GLTFLoader;
 
-        const loader = new GLTFLoader();
-        loader.load(
-          'src/model/ar_hotpoint.glb',
-          function (gltf) {
-            const model = gltf.scene;
-            model.position.setFromMatrixPosition(reticle.matrix);
-            model.quaternion.setFromRotationMatrix(reticle.matrix);
-            model.scale.setScalar(1);
-            scene.add(model);
-            console.log('✅ 模型成功加入場景');
-          },
-          undefined,
-          function (error) {
-            console.error('❌ 模型載入失敗:', error);
-          }
-        );
-      }
+  const loader = new GLTFLoader();
+  loader.load(
+    'src/model/ar_hotpoint.glb',
+    function (gltf) {
+      const model = gltf.scene;
+      model.position.setFromMatrixPosition(reticle.matrix);
+      model.quaternion.setFromRotationMatrix(reticle.matrix);
+      model.scale.setScalar(1);
+      scene.add(model);
+      console.log('✅ 模型成功加入場景');
+    },
+    undefined,
+    function (error) {
+      console.error('❌ 模型載入失敗:', error);
+    }
+  );
+}
 
       controller1 = renderer.xr.getController(0);
       controller1.addEventListener('select', onSelect);
