@@ -33,10 +33,16 @@
 
   <script type="module">
 
-    // cdn方式
-    import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
-    import { ARButton } from 'https://unpkg.com/three@0.180.0/examples/jsm/webxr/ARButton.js';
-    import { GLTFLoader } from 'https://unpkg.com/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+    // cdn方式(官方)
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/webxr/ARButton.js';
+    // import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
+
+
+    // cdn方式(unpkg)
+    // import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
+    // import { ARButton } from 'https://unpkg.com/three@0.180.0/examples/jsm/webxr/ARButton.js';
+    // import { GLTFLoader } from 'https://unpkg.com/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
 
 
     // js方式
@@ -83,7 +89,11 @@
 
       //應該是可以替換的按鈕
 
-      document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+      // document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+      document.body.appendChild(arButton);
+      console.log('ARButton created:', arButton);
+
 
       //換模型
       const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
@@ -213,4 +223,5 @@
   </script> -->
 
 </body>
+
 </html>
