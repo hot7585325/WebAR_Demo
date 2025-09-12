@@ -76,7 +76,7 @@
 			let isModelLoaded = false;
 
 			// 在這裡修改您的 GLTF 模型 URL
-			const GLTF_MODEL_URL = 'src\model\ar_hotpoint.glb';
+			const GLTF_MODEL_URL = 'https://threejs.org/examples/models/gltf/DamagedHelmet/DamagedHelmet.gltf';
 			// 其他範例:
 			// const GLTF_MODEL_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf';
 			// const GLTF_MODEL_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Avocado/glTF/Avocado.gltf';
@@ -214,6 +214,13 @@
 				console.log('Loading GLTF model from:', GLTF_MODEL_URL);
 				updateStatus('載入模型中...', 'yellow');
 
+				// Check if GLTFLoader is available
+				if (!THREE.GLTFLoader) {
+					console.error('GLTFLoader not available');
+					updateStatus('GLTFLoader 不可用', 'red');
+					return;
+				}
+
 				gltfLoader.load(
 					GLTF_MODEL_URL,
 					function(gltf) {
@@ -222,6 +229,13 @@
 						loadedModel = gltf.scene;
 						isModelLoaded = true;
 						
+						// Ensure model has some content
+						if (!loadedModel || loadedModel.children.length === 0) {
+							console.error('Loaded model is empty');
+							updateStatus('載入的模型是空的', 'red');
+							return;
+						}
+						
 						// Get model bounding box for scaling reference
 						const box = new THREE.Box3().setFromObject(loadedModel);
 						const size = box.getSize(new THREE.Vector3());
@@ -229,8 +243,9 @@
 						
 						console.log('Model size:', size);
 						console.log('Max dimension:', maxDimension);
+						console.log('Model children count:', loadedModel.children.length);
 						
-						updateStatus(`模型載入成功! 準備放置`, 'lightgreen');
+						updateStatus(`模型載入成功! 準備放置 (${loadedModel.children.length} 個物件)`, 'lightgreen');
 						
 						// Traverse and log model structure
 						loadedModel.traverse((child) => {
@@ -241,16 +256,38 @@
 						
 					},
 					function(progress) {
-						const percent = (progress.loaded / progress.total * 100) || 0;
-						console.log('Loading progress:', percent + '%');
+						const percent = progress.loaded && progress.total ? (progress.loaded / progress.total * 100) : 0;
+						console.log('Loading progress:', percent + '%', progress);
 						updateStatus(`載入中... ${percent.toFixed(1)}%`, 'yellow');
 					},
 					function(error) {
 						console.error('Error loading GLTF:', error);
-						updateStatus('模型載入失敗!', 'red');
+						console.error('Error details:', error.message, error.stack);
+						updateStatus(`模型載入失敗: ${error.message}`, 'red');
 						isModelLoaded = false;
+						
+						// Try alternative loading method
+						console.log('Trying alternative loading method...');
+						tryAlternativeLoad();
 					}
 				);
+			}
+
+			function tryAlternativeLoad() {
+				console.log('Attempting to load with basic Three.js geometry as fallback...');
+				
+				// Create a simple fallback model
+				const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+				const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+				const cube = new THREE.Mesh(geometry, material);
+				
+				// Wrap in a group to mimic GLTF structure
+				loadedModel = new THREE.Group();
+				loadedModel.add(cube);
+				isModelLoaded = true;
+				
+				console.log('Fallback cube model created');
+				updateStatus('使用備用立方體模型', 'orange');
 			}
 
 			function onWindowResize() {
