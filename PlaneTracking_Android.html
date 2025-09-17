@@ -12,25 +12,6 @@
 
 <body>
   </div>
-  <!-- DOM區域 -->
-  <!-- <div id="ButtonPanel">
-    <div class="CustomBtn" id="start-ar2">
-      <p id="Ani_text">啟動 AR 模式</p>
-    </div>
-    <div class="CustomBtn" id="Home_button">
-      <p id="Home_text">返回主選單</p>
-    </div>
-  </div> -->
-
-  <!-- <script type="importmap">
-			{
-				"imports": {
-					"three": "../build/three.module.js",
-					"three/addons/": "./jsm/"
-				}
-			}
-		</script> -->
-
   <script type="module">
 
     // cdn方式(官方)
@@ -102,7 +83,8 @@
   async function onSelect() {
   if (!reticle.visible) return;
 
-  const module = await import('https://cdn.jsdelivr.net//npm//three@0.180.0//examples//jsm//loaders//GLTFLoader.js');
+const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
+
   const GLTFLoader = module.GLTFLoader;
 
   const loader = new GLTFLoader();
