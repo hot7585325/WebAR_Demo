@@ -157,60 +157,44 @@
 
     //
 
-    function animate(timestamp, frame) {
+  function animate(timestamp, frame) {
+  if (!reticle) return;  // 防止 reticle 未初始化就呼叫
 
-      if (frame) {
+  if (frame) {
+    const referenceSpace = renderer.xr.getReferenceSpace();
+    const session = renderer.xr.getSession();
 
-        const referenceSpace = renderer.xr.getReferenceSpace();
-        const session = renderer.xr.getSession();
+    if (!hitTestSourceRequested) {
+      session.requestReferenceSpace('viewer').then((referenceSpace) => {
+        session.requestHitTestSource({ space: referenceSpace }).then((source) => {
+          hitTestSource = source;
+        });
+      });
 
-        if (hitTestSourceRequested === false) {
+      session.addEventListener('end', () => {
+        hitTestSourceRequested = false;
+        hitTestSource = null;
+      });
 
-          session.requestReferenceSpace('viewer').then(function (referenceSpace) {
-
-            session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
-
-              hitTestSource = source;
-
-            });
-
-          });
-
-          session.addEventListener('end', function () {
-
-            hitTestSourceRequested = false;
-            hitTestSource = null;
-
-          });
-
-          hitTestSourceRequested = true;
-
-        }
-
-        if (hitTestSource) {
-
-          const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-          if (hitTestResults.length) {
-
-            const hit = hitTestResults[0];
-
-            reticle.visible = true;
-            reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-
-          } else {
-
-            reticle.visible = false;
-
-          }
-
-        }
-
-      }
-
-      renderer.render(scene, camera);
-
+      hitTestSourceRequested = true;
     }
+
+    if (hitTestSource) {
+      const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+      if (hitTestResults.length) {
+        const hit = hitTestResults[0];
+        reticle.visible = true;
+        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+      } else {
+        reticle.visible = false;
+      }
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
 
   </script>
   <!-- <script src="src\js\PlaneTrackindMode.js"> </script> -->
