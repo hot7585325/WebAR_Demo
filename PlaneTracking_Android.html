@@ -8,6 +8,8 @@
   <!-- 網頁用Console -->
   <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
   <script>  var vConsole = new VConsole();  </script>
+
+  <!-- GLTFLoader中的import有使用 from 'three';，如果不用importmap會導致找不到模組 -->
   <script type="importmap">
 {
   "imports": {
@@ -24,25 +26,8 @@
   <script type="module">
 
     // cdn方式(官方)
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+    import * as THREE from three;
     import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/webxr/ARButton.js';
-    // import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-
-
-    // cdn方式(unpkg)
-    // import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
-    // import { ARButton } from 'https://unpkg.com/three@0.180.0/examples/jsm/webxr/ARButton.js';
-    // import { GLTFLoader } from 'https://unpkg.com/three@0.180.0/examples/jsm/loaders/GLTFLoader.js';
-
-
-    // js方式
-    // import { GLTFLoader } from '../src/js/GLTFLoader.js';
-
-    // npm方式
-    // import * as THREE from 'three';
-    // import { ARButton } from 'three/addons/webxr/ARButton.js';
-    // import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
 
     let container;
     let camera, scene, renderer;
@@ -79,7 +64,6 @@
 
       //應該是可以替換的按鈕
 
-      // document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
       const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
       document.body.appendChild(arButton);
       console.log('ARButton created:', arButton);
@@ -148,8 +132,6 @@
     //
 
     function animate(timestamp, frame) {
-      // if (!reticle) return;  // 防止 reticle 未初始化就呼叫
-
       if (frame) {
         const referenceSpace = renderer.xr.getReferenceSpace();
         const session = renderer.xr.getSession();
@@ -184,24 +166,7 @@
 
       renderer.render(scene, camera);
     }
-
-
   </script>
-  <!-- <script src="src\js\PlaneTrackindMode.js"> </script> -->
-
-  <!-- <script>
-    document.getElementById('start-ar2').addEventListener('click', async () => {
-      if (navigator.xr) {
-        const session = await navigator.xr.requestSession('immersive-ar', {
-          requiredFeatures: ['hit-test']
-        });
-
-        renderer.xr.setSession(session);
-      } else {
-        alert('你的裝置不支援 WebXR AR 模式，啟用QuickLook');
-      }
-    });
-  </script> -->
 
 </body>
 
