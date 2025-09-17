@@ -25,9 +25,13 @@
   </div>
   <script type="module">
 
+    //#region  依賴與宣告
+
     // cdn方式(官方)
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
     import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/webxr/ARButton.js';
+
+
 
     let container;
     let camera, scene, renderer;
@@ -39,23 +43,29 @@
     let hitTestSource = null;
     let hitTestSourceRequested = false;
 
+    let placedMesh = null;
+    let initialDistance = null;
+    let initialAngle = null;
+    let lastScale = 1;
+    let lastRotationY = 0;
+
+
+    //#endregion
 
     init();
 
     function init() {
 
+      //場景建構
       container = document.createElement('div');
       document.body.appendChild(container);
-
       scene = new THREE.Scene();
-
       camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-
       const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
       light.position.set(0.5, 1, 0.25);
       scene.add(light);
 
-      //ar渲染模式
+      //three接管webxr 渲染方式
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -63,27 +73,22 @@
       renderer.xr.enabled = true;
       container.appendChild(renderer.domElement);
 
-      //應該是可以替換的按鈕
-
+      //ar按鈕(協助除錯與啟用ar模式)可自己替換
       const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
       document.body.appendChild(arButton);
       console.log('ARButton created:', arButton);
 
 
-      //換模型
-      const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
-      // const loader = new GLTFLoader();
-
+      //換模型 點擊產生模型
       async function onSelect() {
         if (hasPlaced) return; // 已經放置過了，不再執行
 
         if (!reticle.visible) return;
 
         const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
-
         const GLTFLoader = module.GLTFLoader;
-
         const loader = new GLTFLoader();
+
         loader.load(
           'src/model/ar_hotpoint.glb',
           function (gltf) {
@@ -92,6 +97,7 @@
             model.quaternion.setFromRotationMatrix(reticle.matrix);
             model.scale.setScalar(1);
             scene.add(model);
+            placedMesh = model;
             console.log('✅ 模型成功加入場景');
           },
           undefined,
@@ -99,9 +105,12 @@
             console.error('❌ 模型載入失敗:', error);
           }
         );
+        reticle.visible = false;
         hasPlaced = true; // 設定旗標，阻止再次放置
       }
 
+
+      //取得控制器，並應用事件
       controller1 = renderer.xr.getController(0);
       controller1.addEventListener('select', onSelect);
       scene.add(controller1);
@@ -111,7 +120,46 @@
       scene.add(controller2);
 
 
-      //偵測平面後顯示的圓環
+      //#region  縮放旋轉(ai)
+      canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2 && placedMesh) {
+          const dx = e.touches[1].clientX - e.touches[0].clientX;
+          const dy = e.touches[1].clientY - e.touches[0].clientY;
+          initialDistance = Math.hypot(dx, dy);
+          initialAngle = Math.atan2(dy, dx);
+        }
+      });
+
+      canvas.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && placedMesh) {
+          const dx = e.touches[1].clientX - e.touches[0].clientX;
+          const dy = e.touches[1].clientY - e.touches[0].clientY;
+          const currentDistance = Math.hypot(dx, dy);
+          const currentAngle = Math.atan2(dy, dx);
+
+          // 縮放
+          const scaleFactor = currentDistance / initialDistance;
+          placedMesh.scale.setScalar(lastScale * scaleFactor);
+
+          // Y軸旋轉
+          const angleDelta = currentAngle - initialAngle;
+          placedMesh.rotation.y = lastRotationY + angleDelta;
+
+          // 可選：即時更新初始值（讓手勢更流暢）
+          // initialDistance = currentDistance;
+          // initialAngle = currentAngle;
+        }
+      });
+
+      canvas.addEventListener('touchend', (e) => {
+        if (placedMesh) {
+          lastScale = placedMesh.scale.x; // 假設等比例縮放
+          lastRotationY = placedMesh.rotation.y;
+        }
+      });
+      //#endregion
+
+      //平面偵測圓環創建
       reticle = new THREE.Mesh(
         new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
         new THREE.MeshBasicMaterial()
@@ -120,8 +168,8 @@
       reticle.visible = false;
       scene.add(reticle);
 
-      //
 
+      //重製螢幕size
       window.addEventListener('resize', onWindowResize);
 
     }
@@ -135,8 +183,8 @@
 
     }
 
-    //
 
+    //#region 渲染與啟用參考空間
     function animate(timestamp, frame) {
       if (frame) {
         const referenceSpace = renderer.xr.getReferenceSpace();
@@ -172,6 +220,9 @@
 
       renderer.render(scene, camera);
     }
+
+    //#endregion
+
   </script>
 
 </body>
