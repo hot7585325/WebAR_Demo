@@ -99,6 +99,7 @@
             console.error('❌ 模型載入失敗:', error);
           }
         );
+        hasPlaced = true; // 設定旗標，阻止再次放置
       }
 
       controller1 = renderer.xr.getController(0);
@@ -109,6 +110,8 @@
       controller2.addEventListener('select', onSelect);
       scene.add(controller2);
 
+
+      //偵測平面後顯示的圓環
       reticle = new THREE.Mesh(
         new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
         new THREE.MeshBasicMaterial()
