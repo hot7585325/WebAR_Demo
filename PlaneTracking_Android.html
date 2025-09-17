@@ -32,7 +32,7 @@
     import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/webxr/ARButton.js';
 
 
-
+    // ar功能用
     let container;
     let camera, scene, renderer;
     let controller1, controller2;
@@ -43,12 +43,17 @@
     let hitTestSource = null;
     let hitTestSourceRequested = false;
 
+    // 旋轉縮放用
     let placedMesh = null;
     let initialDistance = null;
     let initialAngle = null;
     let lastScale = 1;
     let lastRotationY = 0;
+
+    // 動畫用
     const clock = new THREE.Clock();
+    let mixer = null;
+
 
     //#endregion
 
