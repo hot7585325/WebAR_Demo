@@ -77,15 +77,13 @@ function init() {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	mtlLoader = new MTLLoader();
-	mtlLoader.setPath( "./models/obj/monkey/" );
-	mtlLoader.load( 'materials.mtl', function ( materials ) {
+	mtlLoader.load( 'src/model/WebAR_Demo.mtl', function ( materials ) {
 
 		materials.preload();
 
 		var objLoader = new OBJLoader();
 		objLoader.setMaterials( materials );
-		objLoader.setPath( "./models/obj/monkey/" );
-		objLoader.load( 'model.obj', function ( object ) {
+		objLoader.load( 'src/model/WebAR_Demo.obj', function ( object ) {
 
 			monkeymesh = object;
 			scene.add( monkeymesh );
