@@ -91,14 +91,13 @@
 
       // document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
       const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
-      //  const arButton = ARButton.createButton(renderer);
       document.body.appendChild(arButton);
       console.log('ARButton created:', arButton);
 
 
       //換模型
       const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
-      const loader = new GLTFLoader();
+      // const loader = new GLTFLoader();
 
   async function onSelect() {
   if (!reticle.visible) return;
@@ -158,7 +157,7 @@
     //
 
   function animate(timestamp, frame) {
-  if (!reticle) return;  // 防止 reticle 未初始化就呼叫
+  // if (!reticle) return;  // 防止 reticle 未初始化就呼叫
 
   if (frame) {
     const referenceSpace = renderer.xr.getReferenceSpace();
