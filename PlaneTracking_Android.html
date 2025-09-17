@@ -33,6 +33,7 @@
     let camera, scene, renderer;
     let controller1, controller2;
 
+    let hasPlaced = false;
     let reticle;
 
     let hitTestSource = null;
@@ -74,6 +75,8 @@
       // const loader = new GLTFLoader();
 
       async function onSelect() {
+        if (hasPlaced) return; // 已經放置過了，不再執行
+
         if (!reticle.visible) return;
 
         const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');

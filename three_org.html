@@ -2,34 +2,32 @@
 <html lang="en">
 
 <head>
-  <title>three.js ar - hit test</title>
+  <title>Android-AR</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <!-- <link type="text/css" rel="stylesheet" href="main.css"> -->
   <!-- 網頁用Console -->
   <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
   <script>  var vConsole = new VConsole();  </script>
+
+  <!-- GLTFLoader中的import有使用 from 'three';，如果不用importmap會導致找不到模組 -->
+  <script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+  }
+}
+</script>
+
+
 </head>
 
 <body>
-
-  <div id="info">
-    <a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> ar - hit test<br />
   </div>
-
-  <script type="importmap">
-			{
-				"imports": {
-					"three": "../build/three.module.js",
-					"three/addons/": "./jsm/"
-				}
-			}
-		</script>
-
   <script type="module">
 
-    import * as THREE from 'https://unpkg.com/three@0.180.0/build/three.module.js';
-    import { ARButton } from 'https://unpkg.com/three@0.180.0/examples/jsm/webxr/ARButton.js';
+    // cdn方式(官方)
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/webxr/ARButton.js';
 
     let container;
     let camera, scene, renderer;
@@ -39,6 +37,7 @@
 
     let hitTestSource = null;
     let hitTestSourceRequested = false;
+
 
     init();
 
@@ -55,8 +54,7 @@
       light.position.set(0.5, 1, 0.25);
       scene.add(light);
 
-      //
-
+      //ar渲染模式
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -64,26 +62,40 @@
       renderer.xr.enabled = true;
       container.appendChild(renderer.domElement);
 
-      //
+      //應該是可以替換的按鈕
 
-      document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+      document.body.appendChild(arButton);
+      console.log('ARButton created:', arButton);
 
-      //
 
+      //換模型
       const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
+      // const loader = new GLTFLoader();
 
-      function onSelect() {
+      async function onSelect() {
+        if (!reticle.visible) return;
 
-        if (reticle.visible) {
+        const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
 
-          const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-          const mesh = new THREE.Mesh(geometry, material);
-          reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-          mesh.scale.y = Math.random() * 2 + 1;
-          scene.add(mesh);
+        const GLTFLoader = module.GLTFLoader;
 
-        }
-
+        const loader = new GLTFLoader();
+        loader.load(
+          'src/model/ar_hotpoint.glb',
+          function (gltf) {
+            const model = gltf.scene;
+            model.position.setFromMatrixPosition(reticle.matrix);
+            model.quaternion.setFromRotationMatrix(reticle.matrix);
+            model.scale.setScalar(1);
+            scene.add(model);
+            console.log('✅ 模型成功加入場景');
+          },
+          undefined,
+          function (error) {
+            console.error('❌ 模型載入失敗:', error);
+          }
+        );
       }
 
       controller1 = renderer.xr.getController(0);
@@ -120,61 +132,42 @@
     //
 
     function animate(timestamp, frame) {
-
       if (frame) {
-
         const referenceSpace = renderer.xr.getReferenceSpace();
         const session = renderer.xr.getSession();
 
-        if (hitTestSourceRequested === false) {
-
-          session.requestReferenceSpace('viewer').then(function (referenceSpace) {
-
-            session.requestHitTestSource({ space: referenceSpace }).then(function (source) {
-
+        if (!hitTestSourceRequested) {
+          session.requestReferenceSpace('viewer').then((referenceSpace) => {
+            session.requestHitTestSource({ space: referenceSpace }).then((source) => {
               hitTestSource = source;
-
             });
-
           });
 
-          session.addEventListener('end', function () {
-
+          session.addEventListener('end', () => {
             hitTestSourceRequested = false;
             hitTestSource = null;
-
           });
 
           hitTestSourceRequested = true;
-
         }
 
         if (hitTestSource) {
-
           const hitTestResults = frame.getHitTestResults(hitTestSource);
 
           if (hitTestResults.length) {
-
             const hit = hitTestResults[0];
-
             reticle.visible = true;
             reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-
           } else {
-
             reticle.visible = false;
-
           }
-
         }
-
       }
 
       renderer.render(scene, camera);
-
     }
-
   </script>
+
 </body>
 
 </html>
