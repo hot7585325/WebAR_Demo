@@ -41,6 +41,14 @@
       top: 50%;
       font-size: 2em;
     }
+
+    #panel
+    {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      background-color: rebeccapurple;
+    }
   </style>
 
 </head>
@@ -49,6 +57,7 @@
 
   <div id="AR-UI">
     <button id="AniBtn"> 動畫</button>
+    <div id="panel"> </div>
 
   </div>
 
@@ -142,7 +151,7 @@
       if (hasPlaced) return; // 已經放置過了，不再執行
 
       if (!reticle.visible) return;
-
+      toggleDisplayById("panel")
       const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
       const GLTFLoader = module.GLTFLoader;
       const loader = new GLTFLoader();
@@ -238,7 +247,7 @@
 
     }
 
-    //#region 渲染與啟用參考空間
+    //ar渲染與啟用參考空間
     function animate(timestamp, frame) {
       if (frame) {
         const referenceSpace = renderer.xr.getReferenceSpace();
@@ -276,13 +285,12 @@
       const delta = clock.getDelta();
       if (mixer) mixer.update(delta);
 
-
       renderer.render(scene, camera);
     }
-    //#endregion
 
-
+    //按鈕控制
     function DOMCtrl() {
+      //動畫按鈕
       AniBtn.addEventListener("click", () => {
         IsPlayAni = !IsPlayAni;
         console.log("IsPlayAni=" + IsPlayAni);
@@ -294,8 +302,27 @@
           console.log("停止動畫");
         }
       });
+
+
     }
 
+    //切換dom顯示
+    function toggleDisplayById(id) {
+      const element = document.getElementById(id);
+      if (!element) {
+        console.warn(`找不到 id 為 "${id}" 的元素`);
+        return;
+      }
+      // 如果 display 是 none，恢復為預設 (空字串會回到 CSS 原本設定)
+      if (element.style.display === "none") {
+        element.style.display = "";
+      } else {
+        element.style.display = "none";
+      }
+    }
+
+
+    //執行區塊
     DOMCtrl();
 
   </script>
