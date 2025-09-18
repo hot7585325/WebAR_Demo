@@ -117,118 +117,62 @@
       console.log('ARButton created:', arButton);
 
 
-      //換模型 點擊產生模型
-      async function onSelect() {
-        if (hasPlaced) return; // 已經放置過了，不再執行
-
-        if (!reticle.visible) return;
-
-        const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
-        const GLTFLoader = module.GLTFLoader;
-        const loader = new GLTFLoader();
-
-        loader.load(
-          'src/model/ar_hotpoint.glb',
-          function (gltf) {
-            const model = gltf.scene;
-            model.position.setFromMatrixPosition(reticle.matrix);
-            model.quaternion.setFromRotationMatrix(reticle.matrix);
-            model.scale.setScalar(1);
-            scene.add(model);
-            placedMesh = model;
-
-            //動畫
-            mixer = new AnimationMixer(model);
-            const clip = gltf.animations[0]; // 取得第一個動畫片段
-            action = mixer.clipAction(clip);
-            action.play(); // 播放動畫
-
-
-            console.log('✅ 模型成功加入場景');
-          },
-          undefined,
-          function (error) {
-            console.error('❌ 模型載入失敗:', error);
-          }
-        );
-        reticle.visible = false;
-        hasPlaced = true; // 設定旗標，阻止再次放置
-      }
-
-
       //平面偵測圓環創建
       CreateDetectionRing();
-      // reticle = new THREE.Mesh(
-      //   new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
-      //   new THREE.MeshBasicMaterial()
-      // );
-      // reticle.matrixAutoUpdate = false;
-      // reticle.visible = false;
-      // scene.add(reticle);
-
 
       //取得控制器，並應用事件
       controller1 = renderer.xr.getController(0);
-      controller1.addEventListener('select', onSelect);
+      controller1.addEventListener('select', TouchCreateModel);
       scene.add(controller1);
 
       controller2 = renderer.xr.getController(1);
-      controller2.addEventListener('select', onSelect);
+      controller2.addEventListener('select', TouchCreateModel);
       scene.add(controller2);
 
-
-
+      // 手勢控制
       GestureCtrl();
-      //#region  縮放旋轉(ai)
-      // renderer.domElement.addEventListener('touchstart', (e) => {
-      //   if (e.touches.length === 2 && placedMesh) {
-      //     console.log("觸碰touchstart")
-      //     const dx = e.touches[1].clientX - e.touches[0].clientX;
-      //     const dy = e.touches[1].clientY - e.touches[0].clientY;
-      //     initialDistance = Math.hypot(dx, dy);
-      //     initialAngle = Math.atan2(dy, dx);
-      //   }
-      // });
-
-      // renderer.domElement.addEventListener('touchmove', (e) => {
-      //   if (e.touches.length === 2 && placedMesh) {
-      //     console.log("觸碰touchmove")
-      //     const dx = e.touches[1].clientX - e.touches[0].clientX;
-      //     const dy = e.touches[1].clientY - e.touches[0].clientY;
-      //     const currentDistance = Math.hypot(dx, dy);
-      //     const currentAngle = Math.atan2(dy, dx);
-
-      //     // 縮放
-      //     const scaleFactor = currentDistance / initialDistance;
-      //     placedMesh.scale.setScalar(lastScale * scaleFactor);
-
-      //     // Y軸旋轉
-      //     const angleDelta = currentAngle - initialAngle;
-      //     placedMesh.rotation.y = lastRotationY + angleDelta;
-
-      //     // 可選：即時更新初始值（讓手勢更流暢）
-      //     // initialDistance = currentDistance;
-      //     // initialAngle = currentAngle;
-      //   }
-      // });
-
-      // renderer.domElement.addEventListener('touchend', (e) => {
-      //   if (placedMesh) {
-      //     lastScale = placedMesh.scale.x; // 假設等比例縮放
-      //     lastRotationY = placedMesh.rotation.y;
-      //   }
-      // });
-      //#endregion
-
 
       //重製螢幕size
       window.addEventListener('resize', onWindowResize);
+
     }
 
+    //換模型 點擊產生模型
+    async function TouchCreateModel() {
+      if (hasPlaced) return; // 已經放置過了，不再執行
 
-    function TouchCreateModel()
-    {
-      
+      if (!reticle.visible) return;
+
+      const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
+      const GLTFLoader = module.GLTFLoader;
+      const loader = new GLTFLoader();
+
+      loader.load(
+        'src/model/ar_hotpoint.glb',
+        function (gltf) {
+          const model = gltf.scene;
+          model.position.setFromMatrixPosition(reticle.matrix);
+          model.quaternion.setFromRotationMatrix(reticle.matrix);
+          model.scale.setScalar(1);
+          scene.add(model);
+          placedMesh = model;
+
+          //動畫
+          mixer = new AnimationMixer(model);
+          const clip = gltf.animations[0]; // 取得第一個動畫片段
+          action = mixer.clipAction(clip);
+          action.play(); // 播放動畫
+
+
+          console.log('✅ 模型成功加入場景');
+        },
+        undefined,
+        function (error) {
+          console.error('❌ 模型載入失敗:', error);
+        }
+      );
+      reticle.visible = false;
+      hasPlaced = true; // 設定旗標，阻止再次放置
     }
 
     // 手勢控制
