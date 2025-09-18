@@ -188,7 +188,7 @@
 
     // 手勢控制
     function GestureCtrl() {
-      renderer.domElement.addEventListener('touchstart', (e) => {
+      document.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2 && placedMesh) {
           console.log("觸碰touchstart")
           const dx = e.touches[1].clientX - e.touches[0].clientX;
@@ -198,7 +198,7 @@
         }
       });
 
-      renderer.domElement.addEventListener('touchmove', (e) => {
+      document.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2 && placedMesh) {
           console.log("觸碰touchmove")
           const dx = e.touches[1].clientX - e.touches[0].clientX;
@@ -220,7 +220,7 @@
         }
       });
 
-      renderer.domElement.addEventListener('touchend', (e) => {
+      document.addEventListener('touchend', (e) => {
         if (placedMesh) {
           lastScale = placedMesh.scale.x; // 假設等比例縮放
           lastRotationY = placedMesh.rotation.y;
