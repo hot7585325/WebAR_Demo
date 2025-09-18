@@ -157,13 +157,14 @@
 
 
       //平面偵測圓環創建
-      reticle = new THREE.Mesh(
-        new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
-        new THREE.MeshBasicMaterial()
-      );
-      reticle.matrixAutoUpdate = false;
-      reticle.visible = false;
-      scene.add(reticle);
+      CreateDetectionRing();
+      // reticle = new THREE.Mesh(
+      //   new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
+      //   new THREE.MeshBasicMaterial()
+      // );
+      // reticle.matrixAutoUpdate = false;
+      // reticle.visible = false;
+      // scene.add(reticle);
 
 
       //取得控制器，並應用事件
@@ -176,7 +177,62 @@
       scene.add(controller2);
 
 
+
+      GestureCtrl();
       //#region  縮放旋轉(ai)
+      // renderer.domElement.addEventListener('touchstart', (e) => {
+      //   if (e.touches.length === 2 && placedMesh) {
+      //     console.log("觸碰touchstart")
+      //     const dx = e.touches[1].clientX - e.touches[0].clientX;
+      //     const dy = e.touches[1].clientY - e.touches[0].clientY;
+      //     initialDistance = Math.hypot(dx, dy);
+      //     initialAngle = Math.atan2(dy, dx);
+      //   }
+      // });
+
+      // renderer.domElement.addEventListener('touchmove', (e) => {
+      //   if (e.touches.length === 2 && placedMesh) {
+      //     console.log("觸碰touchmove")
+      //     const dx = e.touches[1].clientX - e.touches[0].clientX;
+      //     const dy = e.touches[1].clientY - e.touches[0].clientY;
+      //     const currentDistance = Math.hypot(dx, dy);
+      //     const currentAngle = Math.atan2(dy, dx);
+
+      //     // 縮放
+      //     const scaleFactor = currentDistance / initialDistance;
+      //     placedMesh.scale.setScalar(lastScale * scaleFactor);
+
+      //     // Y軸旋轉
+      //     const angleDelta = currentAngle - initialAngle;
+      //     placedMesh.rotation.y = lastRotationY + angleDelta;
+
+      //     // 可選：即時更新初始值（讓手勢更流暢）
+      //     // initialDistance = currentDistance;
+      //     // initialAngle = currentAngle;
+      //   }
+      // });
+
+      // renderer.domElement.addEventListener('touchend', (e) => {
+      //   if (placedMesh) {
+      //     lastScale = placedMesh.scale.x; // 假設等比例縮放
+      //     lastRotationY = placedMesh.rotation.y;
+      //   }
+      // });
+      //#endregion
+
+
+      //重製螢幕size
+      window.addEventListener('resize', onWindowResize);
+    }
+
+
+    function TouchCreateModel()
+    {
+      
+    }
+
+    // 手勢控制
+    function GestureCtrl() {
       renderer.domElement.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2 && placedMesh) {
           console.log("觸碰touchstart")
@@ -215,16 +271,20 @@
           lastRotationY = placedMesh.rotation.y;
         }
       });
-      //#endregion
-
-
-
-
-      //重製螢幕size
-      window.addEventListener('resize', onWindowResize);
-
     }
 
+    //創建偵測圓環
+    function CreateDetectionRing() {
+      reticle = new THREE.Mesh(
+        new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
+        new THREE.MeshBasicMaterial()
+      );
+      reticle.matrixAutoUpdate = false;
+      reticle.visible = false;
+      scene.add(reticle);
+    }
+
+    //退出模式後行為
     function onWindowResize() {
 
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -233,7 +293,6 @@
       console.log("退出ar模式");
 
     }
-
 
     //#region 渲染與啟用參考空間
     function animate(timestamp, frame) {
@@ -279,7 +338,6 @@
     //#endregion
 
 
-
     function DOMCtrl() {
       AniBtn.addEventListener("click", () => {
         IsPlayAni = !IsPlayAni;
@@ -293,6 +351,7 @@
         }
       });
     }
+
     DOMCtrl();
 
   </script>
