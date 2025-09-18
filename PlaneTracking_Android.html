@@ -38,17 +38,25 @@
 
     #AniBtn {
       position: absolute;
-      top: 50%;
       font-size: 2em;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
     #panel {
       position: relative;
-      display:none;
+      /* display: none; */
       width: 100vw;
       height: 100vh;
       text-align: center;
-      background-color: rgb(100, 3, 32);
+      background-color: rgba(0, 0, 0, 0.507);
+    }
+
+    #panel p {
+      position: relative;
+      top: 50%;
+      font-size: 2em;
     }
   </style>
 
@@ -184,7 +192,7 @@
       );
       reticle.visible = false;
       hasPlaced = true; // 設定旗標，阻止再次放置
-      
+
     }
 
     // 手勢控制
