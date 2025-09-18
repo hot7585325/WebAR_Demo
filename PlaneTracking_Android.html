@@ -308,26 +308,25 @@
 
     }
 
-    //切換dom顯示
-    function toggleDisplayById(id) {
+    // 切換 dom 顯示
+    function toggleDisplayById(id, state = "block") {
       const element = document.getElementById(id);
       if (!element) {
         console.warn(`找不到 id 為 "${id}" 的元素`);
         return;
       }
 
-      // 取得目前的顯示狀態（計算後樣式）
+      // 取得當前顯示狀態（計算後樣式）
       const currentDisplay = window.getComputedStyle(element).display;
 
       if (currentDisplay === "none") {
-        // 顯示：恢復為預設 (空字串讓它回到原本的 CSS 設定)
-        element.style.display = "";
+        // 顯示
+        element.style.display = state;
       } else {
         // 隱藏
         element.style.display = "none";
       }
     }
-
 
 
     //執行區塊
