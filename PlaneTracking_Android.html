@@ -109,7 +109,7 @@
       container.appendChild(renderer.domElement);
 
       //ar按鈕(協助除錯與啟用ar模式)可自己替換
-      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+      const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] ,optionalFeatures: ['dom-overlay'],  domOverlay: { root: document.body }});
       document.body.appendChild(arButton);
       console.log('ARButton created:', arButton);
 
