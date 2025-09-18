@@ -57,7 +57,9 @@
 
   <div id="AR-UI">
     <button id="AniBtn"> 動畫</button>
-    <div id="panel"><p>模型載入中...</p></div>
+    <div id="panel">
+      <p>模型載入中...</p>
+    </div>
   </div>
 
 
@@ -313,13 +315,19 @@
         console.warn(`找不到 id 為 "${id}" 的元素`);
         return;
       }
-      // 如果 display 是 none，恢復為預設 (空字串會回到 CSS 原本設定)
-      if (element.style.display === "none") {
+
+      // 取得目前的顯示狀態（計算後樣式）
+      const currentDisplay = window.getComputedStyle(element).display;
+
+      if (currentDisplay === "none") {
+        // 顯示：恢復為預設 (空字串讓它回到原本的 CSS 設定)
         element.style.display = "";
       } else {
+        // 隱藏
         element.style.display = "none";
       }
     }
+
 
 
     //執行區塊
