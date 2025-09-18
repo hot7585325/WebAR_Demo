@@ -143,7 +143,7 @@
 
 
       //#region  縮放旋轉(ai)
-      canvas.addEventListener('touchstart', (e) => {
+      renderer.domElement.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2 && placedMesh) {
           const dx = e.touches[1].clientX - e.touches[0].clientX;
           const dy = e.touches[1].clientY - e.touches[0].clientY;
@@ -152,7 +152,7 @@
         }
       });
 
-      canvas.addEventListener('touchmove', (e) => {
+      renderer.domElement.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2 && placedMesh) {
           const dx = e.touches[1].clientX - e.touches[0].clientX;
           const dy = e.touches[1].clientY - e.touches[0].clientY;
@@ -173,7 +173,7 @@
         }
       });
 
-      canvas.addEventListener('touchend', (e) => {
+      renderer.domElement.addEventListener('touchend', (e) => {
         if (placedMesh) {
           lastScale = placedMesh.scale.x; // 假設等比例縮放
           lastRotationY = placedMesh.rotation.y;
