@@ -37,7 +37,7 @@
     }
 
     #AniBtn {
-      position: relative;
+      position: absolute;
       top: 50%;
       font-size: 2em;
     }
@@ -174,7 +174,7 @@
           action = mixer.clipAction(clip);
           action.play(); // 播放動畫
 
-
+          toggleDisplayById("panel")  //再次呼叫會關閉
           console.log('✅ 模型成功加入場景');
         },
         undefined,
@@ -184,7 +184,7 @@
       );
       reticle.visible = false;
       hasPlaced = true; // 設定旗標，阻止再次放置
-      toggleDisplayById("panel")  //再次呼叫會關閉
+      
     }
 
     // 手勢控制
