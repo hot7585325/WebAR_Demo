@@ -30,16 +30,15 @@
       touch-action: none;
       position: fixed;
       z-index: 9999;
-      top: 10%;
       width: 100vw;
-      height: 20vh;
-      background-color: rgba(0, 0, 0, 0);
+      height: 100vh;
+      background-color: rgba(221, 2, 2, 0);
       text-align: center;
     }
 
     #AniBtn {
       position: relative;
-      bottom: 0%;
+      top: 10%;
       font-size: 2em;
     }
   </style>
@@ -178,7 +177,7 @@
 
 
       //#region  縮放旋轉(ai)
-      renderer.document.addEventListener('touchstart', (e) => {
+      renderer.domElement.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2 && placedMesh) {
           console.log("觸碰touchstart")
           const dx = e.touches[1].clientX - e.touches[0].clientX;
@@ -188,7 +187,7 @@
         }
       });
 
-      renderer.document.addEventListener('touchmove', (e) => {
+      renderer.domElement.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2 && placedMesh) {
           console.log("觸碰touchmove")
           const dx = e.touches[1].clientX - e.touches[0].clientX;
@@ -210,7 +209,7 @@
         }
       });
 
-      renderer.document.addEventListener('touchend', (e) => {
+      renderer.domElement.addEventListener('touchend', (e) => {
         if (placedMesh) {
           lastScale = placedMesh.scale.x; // 假設等比例縮放
           lastRotationY = placedMesh.rotation.y;
