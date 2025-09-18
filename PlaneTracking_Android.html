@@ -31,12 +31,13 @@
       position: fixed;
       z-index: 9999;
       width: 100vw;
-      height: 20vh;
-      background-color: rgba(24, 2, 221, 0.329);
+      height: 50vh;
+      background-color: rgba(24, 2, 221, 0);
       text-align: center;
     }
 
     #AniBtn {
+      display: none;
       position: absolute;
       font-size: 2em;
       bottom: 10px;
@@ -181,7 +182,7 @@
           const clip = gltf.animations[0]; // 取得第一個動畫片段
           action = mixer.clipAction(clip);
           action.play(); // 播放動畫
-
+          AniBtn.style.display="block"
           toggleDisplayById("panel")  //再次呼叫會關閉
           console.log('✅ 模型成功加入場景');
         },
