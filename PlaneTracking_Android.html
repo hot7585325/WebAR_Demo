@@ -108,7 +108,7 @@
       renderer.xr.enabled = true;
       container.appendChild(renderer.domElement);
 
-      //ar按鈕(協助除錯與啟用ar模式)可自己替換
+      //ar按鈕(協助除錯與啟用ar模式)可自己替換，但要自己處理問題
       const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] ,optionalFeatures: ['dom-overlay'],  domOverlay: { root: document.getElementById('AR-UI') }});
       document.body.appendChild(arButton);
       console.log('ARButton created:', arButton);
@@ -175,7 +175,8 @@
 
       //#region  縮放旋轉(ai)
       renderer.domElement.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2 && placedMesh) {
+        if (e.touches.length === 2 ) {
+          console.log("觸碰touchstart")
           const dx = e.touches[1].clientX - e.touches[0].clientX;
           const dy = e.touches[1].clientY - e.touches[0].clientY;
           initialDistance = Math.hypot(dx, dy);
@@ -185,6 +186,7 @@
 
       renderer.domElement.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2 && placedMesh) {
+           console.log("觸碰touchmove")
           const dx = e.touches[1].clientX - e.touches[0].clientX;
           const dy = e.touches[1].clientY - e.touches[0].clientY;
           const currentDistance = Math.hypot(dx, dy);
