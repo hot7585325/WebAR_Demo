@@ -21,12 +21,34 @@
     canvas {
       touch-action: none;
     }
+
+    #AR-UI {
+      touch-action: none;
+      position: fixed;
+      bottom: 0;
+      width: 100vw;
+      height: 20vh;
+      background-color: rgba(0, 0, 0, 0);
+      text-align: center;
+    }
+
+    #AniBtn {
+      position: relative;
+      top: 50%;
+      font-size: 2em;
+    }
   </style>
 
 </head>
 
 <body>
+
+  <div id="AR-UI">
+    <button id="AniBtn"> 動畫</button>
+
   </div>
+
+
   <script type="module">
 
     //#region  依賴與宣告
@@ -57,6 +79,9 @@
     // 動畫用
     const clock = new THREE.Clock();
     let mixer = null;
+    let action = null;
+    const AniBtn = document.querySelector("#AniBtn")
+    let IsPlayAni = false;
 
 
     //#endregion
@@ -111,8 +136,9 @@
             //動畫
             mixer = new AnimationMixer(model);
             const clip = gltf.animations[0]; // 取得第一個動畫片段
-            const action = mixer.clipAction(clip);
+            action = mixer.clipAction(clip);
             action.play(); // 播放動畫
+
 
             console.log('✅ 模型成功加入場景');
           },
@@ -244,8 +270,24 @@
 
       renderer.render(scene, camera);
     }
-
     //#endregion
+
+
+
+    function DOMCtrl() {
+      AniBtn.addEventListener("click", () => {
+        IsPlayAni = !IsPlayAni;
+        console.log("IsPlayAni=" + IsPlayAni);
+        if (IsPlayAni) {
+          action.play();
+          console.log("播放動畫");
+        } else {
+          action.stop();
+          console.log("停止動畫");
+        }
+      });
+    }
+    DOMCtrl();
 
   </script>
 
