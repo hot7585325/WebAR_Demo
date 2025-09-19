@@ -115,6 +115,7 @@
     // 動畫用
     const clock = new THREE.Clock();
     const mixers = [];   //陣列存取動畫
+    const actions = [];
     let mixer = null;
     let action = null;
     const AniBtn = document.querySelector("#AniBtn")
@@ -299,7 +300,9 @@
           toggleDisplayById("panel")  //再次呼叫會關閉
           console.log('✅ 模型成功加入場景');
         },
-        undefined,
+        function (xhr) {
+          console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
         function (error) {
           console.error('❌ 模型載入失敗:', error);
         }
@@ -313,18 +316,23 @@
     //設定model的轉換
     function Set_Model_Attribute(gltf, AniIndex = 0) {
 
+      //轉換
       const _model = gltf.scene;
       _model.position.setFromMatrixPosition(reticle.matrix);
       _model.quaternion.setFromRotationMatrix(reticle.matrix);
       _model.scale.setScalar(.5);
-      ModelMeshs.push(_model)
-      scene.add(_model);
+
       //動畫
       const _mixer = new AnimationMixer(_model);
       const clip = gltf.animations[AniIndex];
       const _action = _mixer.clipAction(clip);
-      mixers.push(_mixer); // 儲存到陣列
 
+      // 儲存到陣列
+      ModelMeshs.push(_model)
+      mixers.push(_mixer);
+      actions.push(_action);
+
+      scene.add(_model);
       return _model;
     }
 
@@ -442,10 +450,12 @@
         IsPlayAni = !IsPlayAni;
         console.log("IsPlayAni=" + IsPlayAni);
         if (IsPlayAni) {
-          action.play();
+          actions.forEach(action=>action.play())
+          // action.play();
           console.log("播放動畫");
         } else {
-          action.stop();
+           actions.forEach(action=>action.stop())
+          // action.stop();
           console.log("停止動畫");
         }
       });
