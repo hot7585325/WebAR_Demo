@@ -106,7 +106,7 @@
 
     // 模型轉換用
     const ModelMeshs = [];   //陣列存取模型
-    let placedMesh = null;
+    let placedMesh = new THREE.Group();  //空物件 手勢控制用
     let initialDistance = null;
     let initialAngle = null;
     let lastScale = 1;
@@ -130,9 +130,9 @@
 
     //#endregion
 
-    init();
+    Main();
 
-    function init() {
+    function Main() {
 
       //場景建構
       container = document.createElement('div');
@@ -142,6 +142,7 @@
       const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
       light.position.set(0.5, 1, 0.25);
       scene.add(light);
+      scene.add(placedMesh);
 
       //three接管webxr 渲染方式
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -158,8 +159,8 @@
 
 
       //模型測試區域
-      // TouchCreateModel();
-      // enablePCControls();
+      TouchCreateModel();
+      enablePCControls();
 
       //平面偵測圓環創建
       CreateDetectionRing();
@@ -268,7 +269,7 @@
     }
 
 
-    //換模型 點擊產生模型，把要load的模型都放在裡面
+    //點擊產生模型，把要load的模型都放在裡面
     async function TouchCreateModel() {
       if (hasPlaced) return; // 已經放置過了，不再執行
 
@@ -282,14 +283,14 @@
       loader.load(
         'src/model/ar_hotpoint.glb',
         function (gltf) {
-          placedMesh = Set_Model_Attribute(gltf, 0)
+          Set_Model_Attribute(gltf, 0);
           AniBtn.style.display = "block"
           toggleDisplayById("panel")  //再次呼叫會關閉
           console.log('ar_hotpoint成功加入場景');
         },
         function (xhr) {
           // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-          loading_text.textContent="模型載入進度 "+(xhr.loaded / xhr.total * 100)+"%";
+          loading_text.textContent = "模型載入進度 " + (xhr.loaded / xhr.total * 100).toFixed(0) + "%";
         },
         function (error) {
           console.error('ar_hotpoint載入失敗:', error);
@@ -315,7 +316,7 @@
 
     }
 
-    //設定model的轉換
+    //設定model相關參數(不需要使用 scene.add(_model)，因為作為容器的placedMesh已經實作了)
     function Set_Model_Attribute(gltf, AniIndex = 0) {
 
       //轉換
@@ -334,13 +335,14 @@
       mixers.push(_mixer);
       actions.push(_action);
 
-      scene.add(_model);
+      //加到以實作scene.add，的容器中
+      placedMesh.add(_model);
       return _model;
     }
 
 
 
-    // 手勢控制
+    // 手勢控制(主要控制placedMesh 容器)
     function GestureCtrl() {
       document.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2 && placedMesh) {
@@ -400,8 +402,6 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       console.log("退出ar模式");
-      // scene.remove(placedMesh)
-
     }
 
     //ar渲染與啟用參考空間
