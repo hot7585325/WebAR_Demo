@@ -59,6 +59,17 @@
       top: 50%;
       font-size: 2em;
     }
+
+    #ARButton {
+      font-size: 5em;
+      width: auto;
+      max-width: 200px;
+      cursor: pointer;
+      border-width: 2px;
+      border-radius: 30px;
+      background-color: rgb(255, 149, 0);
+      padding: .1em 1em;
+    }
   </style>
 
 </head>
@@ -93,7 +104,8 @@
     let hitTestSource = null;
     let hitTestSourceRequested = false;
 
-    // 旋轉縮放用
+    // 模型轉換用
+    const ModelMeshs = [];   //陣列存取模型
     let placedMesh = null;
     let initialDistance = null;
     let initialAngle = null;
@@ -102,11 +114,20 @@
 
     // 動畫用
     const clock = new THREE.Clock();
+    const mixers = [];   //陣列存取動畫
     let mixer = null;
     let action = null;
     const AniBtn = document.querySelector("#AniBtn")
     let IsPlayAni = false;
 
+    //pc測試用
+    let isMouseDown = false;
+    let prevMouseX = 0;
+    let rotateSpeed = 0.01;
+    let moveSpeed = 0.05;
+
+    let isRightMouseDown = false;
+    const zoomSpeed = 0.1;
 
     //#endregion
 
@@ -137,10 +158,14 @@
       console.log('ARButton created:', arButton);
 
 
+      //模型測試區域
+      TouchCreateModel();
+      enablePCControls();
+
       //平面偵測圓環創建
       CreateDetectionRing();
 
-      //取得控制器，並應用事件
+      //取得控制器，並應用事件(在ar狀態才會啟用)
       controller1 = renderer.xr.getController(0);
       controller1.addEventListener('select', TouchCreateModel);
       scene.add(controller1);
@@ -157,11 +182,98 @@
 
     }
 
+
+
+
+    // 啟用 PC 模式控制（非 AR）
+    function enablePCControls() {
+      document.addEventListener('keydown', (e) => {
+        if (!placedMesh) return;
+
+        switch (e.key.toLowerCase()) {
+          case 'w':
+            placedMesh.position.z -= moveSpeed;
+            break;
+          case 's':
+            placedMesh.position.z += moveSpeed;
+            break;
+          case 'a':
+            placedMesh.position.x -= moveSpeed;
+            break;
+          case 'd':
+            placedMesh.position.x += moveSpeed;
+            break;
+          case 'q':
+            placedMesh.position.y += moveSpeed;
+            break;
+          case 'e':
+            placedMesh.position.y -= moveSpeed;
+            break;
+        }
+      });
+
+      document.addEventListener('mousedown', (e) => {
+        isMouseDown = true;
+        prevMouseX = e.clientX;
+      });
+
+      document.addEventListener('mouseup', () => {
+        isMouseDown = false;
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isMouseDown || !placedMesh) return;
+
+        const deltaX = e.clientX - prevMouseX;
+        placedMesh.rotation.y += deltaX * rotateSpeed;
+        prevMouseX = e.clientX;
+      });
+
+      // 滾輪控制遠近（可選擇 scale 或 position.z）
+      document.addEventListener('wheel', (e) => {
+        if (!placedMesh) return;
+
+        const delta = e.deltaY > 0 ? -zoomSpeed : zoomSpeed;
+        placedMesh.scale.multiplyScalar(1 + delta); // 使用 scale 放大縮小
+        // 或使用 position.z 模擬遠近：placedMesh.position.z += delta;
+      });
+
+      // 滑鼠右鍵按下
+      document.addEventListener('mousedown', (e) => {
+        if (e.button === 2) { // 右鍵
+          isRightMouseDown = true;
+          prevMouseX = e.clientX;
+        }
+      });
+
+      // 滑鼠右鍵放開
+      document.addEventListener('mouseup', (e) => {
+        if (e.button === 2) {
+          isRightMouseDown = false;
+        }
+      });
+
+      // 滑鼠移動旋轉模型
+      document.addEventListener('mousemove', (e) => {
+        if (!isRightMouseDown || !placedMesh) return;
+
+        const deltaX = e.clientX - prevMouseX;
+        placedMesh.rotation.y += deltaX * rotateSpeed;
+        prevMouseX = e.clientX;
+      });
+
+      // 禁止右鍵選單干擾
+      document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      console.log("✅ PC 控制模式已啟用");
+    }
+
+
     //換模型 點擊產生模型
     async function TouchCreateModel() {
       if (hasPlaced) return; // 已經放置過了，不再執行
 
-      if (!reticle.visible) return;
+      // if (!reticle.visible) return;  //測試時註解
       toggleDisplayById("panel") //首次呼叫會打開
       const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
       const GLTFLoader = module.GLTFLoader;
@@ -170,19 +282,20 @@
       loader.load(
         'src/model/ar_hotpoint.glb',
         function (gltf) {
-          const model = gltf.scene;
-          model.position.setFromMatrixPosition(reticle.matrix);
-          model.quaternion.setFromRotationMatrix(reticle.matrix);
-          model.scale.setScalar(1);
-          scene.add(model);
-          placedMesh = model;
+          // const model = gltf.scene;
+          // model.position.setFromMatrixPosition(reticle.matrix);
+          // model.quaternion.setFromRotationMatrix(reticle.matrix);
+          // model.scale.setScalar(.5);
+          // scene.add(model);
+          // placedMesh = model;
 
-          //動畫
-          mixer = new AnimationMixer(model);
-          const clip = gltf.animations[0]; // 取得第一個動畫片段
-          action = mixer.clipAction(clip);
-          action.play(); // 播放動畫
-          AniBtn.style.display="block"
+          // //動畫
+          // mixer = new AnimationMixer(model);
+          // const clip = gltf.animations[0]; // 取得第一個動畫片段
+          // action = mixer.clipAction(clip);
+          Set_Model_Attribute(gltf,0)
+
+          AniBtn.style.display = "block"
           toggleDisplayById("panel")  //再次呼叫會關閉
           console.log('✅ 模型成功加入場景');
         },
@@ -191,10 +304,29 @@
           console.error('❌ 模型載入失敗:', error);
         }
       );
+
       reticle.visible = false;
       hasPlaced = true; // 設定旗標，阻止再次放置
 
     }
+
+    //設定model的轉換
+    function Set_Model_Attribute(gltf,AniIndex=0) {
+
+      const _model = gltf.scene;
+      _model.position.setFromMatrixPosition(reticle.matrix);
+      _model.quaternion.setFromRotationMatrix(reticle.matrix);
+      _model.scale.setScalar(.5);
+      ModelMeshs.push(_model)
+      scene.add(_model);
+      //動畫
+      const _mixer = new AnimationMixer(_model);
+      const clip = gltf.animations[AniIndex];
+      const _action = m_mixer.clipAction(clip);
+      mixers.push(_mixer); // 儲存到陣列
+    }
+
+
 
     // 手勢控制
     function GestureCtrl() {
@@ -295,7 +427,7 @@
 
       // 更新動畫時間軸
       const delta = clock.getDelta();
-      if (mixer) mixer.update(delta);
+      mixers.forEach(mixer => mixer.update(delta));
 
       renderer.render(scene, camera);
     }
