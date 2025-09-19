@@ -119,6 +119,12 @@
     const AniBtn = document.querySelector("#AniBtn")
     let IsPlayAni = false;
 
+    //射線用
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2(); // 或是使用者頭部方向、手勢等
+    const interactableObjects = [];
+
+
     //pc測試用
     let isMouseDown = false;
     let prevMouseX = 0;
@@ -158,12 +164,12 @@
       console.log('ARButton created:', arButton);
 
 
-      //模型測試區域
-      // TouchCreateModel();
-      // enablePCControls();
-
       //平面偵測圓環創建
       CreateDetectionRing();
+
+      //模型測試區域
+      TouchCreateModel();
+      enablePCControls();
 
       //取得控制器，並應用事件(在ar狀態才會啟用)
       controller1 = renderer.xr.getController(0);
@@ -268,12 +274,11 @@
       console.log("✅ PC 控制模式已啟用");
     }
 
-
     //點擊產生模型，把要load的模型都放在裡面
     async function TouchCreateModel() {
       if (hasPlaced) return; // 已經放置過了，不再執行
       // if (!reticle.visible) return;  //測試時註解
-      
+
       //設置placedMesh的位置，否則會再相機的中心點
       placedMesh.position.setFromMatrixPosition(reticle.matrix);
       placedMesh.quaternion.setFromRotationMatrix(reticle.matrix);
@@ -295,7 +300,6 @@
           console.log('ar_hotpoint成功加入場景');
         },
         function (xhr) {
-          // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
           loading_text.textContent = "模型載入進度 " + (xhr.loaded / xhr.total * 100).toFixed(0) + "%";
         },
         function (error) {
@@ -307,9 +311,15 @@
       loader.load('src/model/hotspot.glb', function (gltf) {
         Set_Model_Attribute(gltf, 0);
         console.log('hotspot成功加入場景');
+        Add_InteractableObjects("hotsport_001");
+        Add_InteractableObjects("hotsport_002");
+        Add_InteractableObjects("hotsport_003");
+        Add_InteractableObjects("hotsport_004");
+        Add_InteractableObjects("hotsport_005");
+        Add_InteractableObjects("hotsport_006");
       },
         function (xhr) {
-          // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+
         },
         function (error) {
           console.error('hotspot載入失敗:', error);
@@ -346,8 +356,6 @@
       return _model;
     }
 
-
-
     // 手勢控制(主要控制placedMesh 容器)
     function GestureCtrl() {
       document.addEventListener('touchstart', (e) => {
@@ -380,6 +388,16 @@
           // initialDistance = currentDistance;
           // initialAngle = currentAngle;
         }
+
+        //射線
+        window.addEventListener('touchstart', (event) => {
+          // 計算觸控點位置
+          const touch = event.touches[0];
+          mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+          mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+          RatCastCtrl(); // 執行射線判定
+        });
       });
 
       document.addEventListener('touchend', (e) => {
@@ -399,6 +417,32 @@
       reticle.matrixAutoUpdate = false;
       reticle.visible = false;
       scene.add(reticle);
+      console.log("偵測點已創建");
+    }
+
+    //加入可射線互動陣列(在點按模型 load後呼叫)
+    function Add_InteractableObjects(MeshName) {
+      const HitMesh = scene.getObjectByName(MeshName);
+      interactableObjects.push(HitMesh);
+      interactableObjects.forEach(mesh => console.log("可互動物件=" + mesh.name));
+    }
+
+    //射線判斷
+    function RatCastCtrl() {
+
+      console.log("觸發射線")
+      const xrCamera = renderer.xr.getCamera(camera);
+      raycaster.setFromCamera(mouse, xrCamera);
+      // 在射線判定時使用整個陣列
+      const intersects = raycaster.intersectObjects(interactableObjects, true);
+
+      for (let i = 0; i < intersects.length; i++) {
+        const hitObject = intersects[i].object;
+        if (hitObject.name === 'hotsport_001') {
+          console.log('碰撞到 hotsport_001');
+          // 執行互動邏輯，例如開窗、展示資訊等
+        }
+      }
     }
 
     //退出模式後行為
@@ -492,7 +536,6 @@
 
     //執行區塊
     DOMCtrl();
-
   </script>
 
 </body>
