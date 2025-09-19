@@ -272,8 +272,14 @@
     //點擊產生模型，把要load的模型都放在裡面
     async function TouchCreateModel() {
       if (hasPlaced) return; // 已經放置過了，不再執行
-
       // if (!reticle.visible) return;  //測試時註解
+      
+      //設置placedMesh的位置，否則會再相機的中心點
+      placedMesh.position.setFromMatrixPosition(reticle.matrix);
+      placedMesh.quaternion.setFromRotationMatrix(reticle.matrix);
+      placedMesh.scale.setScalar(.5);
+
+
       toggleDisplayById("panel") //首次呼叫會打開
       const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
       const GLTFLoader = module.GLTFLoader;
