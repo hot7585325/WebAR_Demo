@@ -293,7 +293,7 @@
           // mixer = new AnimationMixer(model);
           // const clip = gltf.animations[0]; // 取得第一個動畫片段
           // action = mixer.clipAction(clip);
-          Set_Model_Attribute(gltf,0)
+          placedMesh = Set_Model_Attribute(gltf, 0)
 
           AniBtn.style.display = "block"
           toggleDisplayById("panel")  //再次呼叫會關閉
@@ -311,7 +311,7 @@
     }
 
     //設定model的轉換
-    function Set_Model_Attribute(gltf,AniIndex=0) {
+    function Set_Model_Attribute(gltf, AniIndex = 0) {
 
       const _model = gltf.scene;
       _model.position.setFromMatrixPosition(reticle.matrix);
@@ -322,8 +322,10 @@
       //動畫
       const _mixer = new AnimationMixer(_model);
       const clip = gltf.animations[AniIndex];
-      const _action = m_mixer.clipAction(clip);
+      const _action = _mixer.clipAction(clip);
       mixers.push(_mixer); // 儲存到陣列
+
+      return _model;
     }
 
 
@@ -388,6 +390,7 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       console.log("退出ar模式");
+      scene.remove(placedMesh)
 
     }
 
