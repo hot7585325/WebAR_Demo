@@ -79,7 +79,7 @@
   <div id="AR-UI">
     <button id="AniBtn"> 動畫</button>
     <div id="panel">
-      <p>模型載入中...</p>
+      <p id="loading_text">模型載入中...</p>
     </div>
   </div>
 
@@ -116,8 +116,6 @@
     const clock = new THREE.Clock();
     const mixers = [];   //陣列存取動畫
     const actions = [];
-    let mixer = null;
-    let action = null;
     const AniBtn = document.querySelector("#AniBtn")
     let IsPlayAni = false;
 
@@ -153,7 +151,7 @@
       renderer.xr.enabled = true;
       container.appendChild(renderer.domElement);
 
-      //ar按鈕(協助除錯與啟用ar模式)可自己替換，但要自己處理問題
+      //Three.js 提供的AR按鈕，會在click時 去向webxr請求功能模組
       const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.getElementById('AR-UI') } });
       document.body.appendChild(arButton);
       console.log('ARButton created:', arButton);
@@ -270,7 +268,7 @@
     }
 
 
-    //換模型 點擊產生模型
+    //換模型 點擊產生模型，把要load的模型都放在裡面
     async function TouchCreateModel() {
       if (hasPlaced) return; // 已經放置過了，不再執行
 
@@ -280,33 +278,37 @@
       const GLTFLoader = module.GLTFLoader;
       const loader = new GLTFLoader();
 
+      //主模型
       loader.load(
         'src/model/ar_hotpoint.glb',
         function (gltf) {
-          // const model = gltf.scene;
-          // model.position.setFromMatrixPosition(reticle.matrix);
-          // model.quaternion.setFromRotationMatrix(reticle.matrix);
-          // model.scale.setScalar(.5);
-          // scene.add(model);
-          // placedMesh = model;
-
-          // //動畫
-          // mixer = new AnimationMixer(model);
-          // const clip = gltf.animations[0]; // 取得第一個動畫片段
-          // action = mixer.clipAction(clip);
           placedMesh = Set_Model_Attribute(gltf, 0)
-
           AniBtn.style.display = "block"
           toggleDisplayById("panel")  //再次呼叫會關閉
-          console.log('✅ 模型成功加入場景');
+          console.log('ar_hotpoint成功加入場景');
         },
         function (xhr) {
-          console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+          // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+          loading_text.textContent="模型載入進度 "+(xhr.loaded / xhr.total * 100)+"%";
         },
         function (error) {
-          console.error('❌ 模型載入失敗:', error);
+          console.error('ar_hotpoint載入失敗:', error);
         }
       );
+
+      //點按模型
+      loader.load('src/model/hotspot.glb', function (gltf) {
+        Set_Model_Attribute(gltf, 0);
+        console.log('hotspot成功加入場景');
+      },
+        function (xhr) {
+          // console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
+        function (error) {
+          console.error('hotspot載入失敗:', error);
+        })
+
+
 
       reticle.visible = false;
       hasPlaced = true; // 設定旗標，阻止再次放置
@@ -450,12 +452,10 @@
         IsPlayAni = !IsPlayAni;
         console.log("IsPlayAni=" + IsPlayAni);
         if (IsPlayAni) {
-          actions.forEach(action=>action.play())
-          // action.play();
+          actions.forEach(action => action.play())
           console.log("播放動畫");
         } else {
-           actions.forEach(action=>action.stop())
-          // action.stop();
+          actions.forEach(action => action.stop())
           console.log("停止動畫");
         }
       });
