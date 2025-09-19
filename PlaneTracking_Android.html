@@ -73,7 +73,7 @@
     }
 
     #info_Panel {
-      display: block;
+      display: none;
       position: relative;
       background-color: hwb(0 0% 100% / 0.614);
       pointer-events: auto;
@@ -86,7 +86,7 @@
     }
 
     .info_image {
-      display: block;
+      display: none;
       position: absolute;
       top: 0;
       left: 0%;
@@ -402,11 +402,15 @@
     //設定model相關參數(不需要使用 scene.add(_model)，因為作為容器的placedMesh已經實作了)
     function Set_Model_Attribute(gltf, AniIndex = 0) {
 
-      //轉換
       const _model = gltf.scene;
-      _model.position.setFromMatrixPosition(reticle.matrix);
-      _model.quaternion.setFromRotationMatrix(reticle.matrix);
-      _model.scale.setScalar(.5);
+      //加到以實作scene.add，的容器中
+      placedMesh.add(_model);
+
+      //轉換
+      _model.position.set(0, 0, 0); // 相對於 placedMesh 的位置
+      _model.quaternion.identity(); // 清除旋轉（可選）
+      _model.scale.setScalar(0.5);  // 設定縮放
+
 
       //動畫
       const _mixer = new AnimationMixer(_model);
@@ -418,8 +422,7 @@
       mixers.push(_mixer);
       actions.push(_action);
 
-      //加到以實作scene.add，的容器中
-      placedMesh.add(_model);
+
       return _model;
     }
 
@@ -512,7 +515,7 @@
       const intersects = raycaster.intersectObjects(interactableObjects, true);
 
       for (let i = 0; i < intersects.length; i++) {
-        info_Panel.style.display= 'block'
+        info_Panel.style.display = 'block'
         const hitObject = intersects[i].object;
         if (hitObject.name === 'hotsport_001') { console.log('碰撞到 hotsport_001'); info_1.style.display = 'block' }
         if (hitObject.name === 'hotsport_002') { console.log('碰撞到 hotsport_002'); info_2.style.display = 'block' }
