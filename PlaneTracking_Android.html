@@ -17,6 +17,7 @@
   }
 }
 </script>
+
   <style>
     body {
       background-color: black;
@@ -70,6 +71,46 @@
       background-color: rgb(255, 149, 0);
       padding: .1em 1em;
     }
+
+    #info_Panel {
+      display: none;
+      position: relative;
+      background-color: hwb(0 0% 100% / 0.614);
+      pointer-events: auto;
+      margin: auto;
+      overflow-y: auto;
+
+      width: 100vw;
+      max-width: 1080px;
+      height: 100vh;
+    }
+
+    .info_image {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0%;
+      height: auto;
+      width: 100%;
+      max-height: 100%;
+      object-position: center;
+      object-fit: contain;
+      aspect-ratio: 1080/1830;
+    }
+
+    #info_button {
+      position: absolute;
+      left: 50%;
+      top: 70%;
+      transform: translate(-50%, -50%);
+      width: 20%;
+      cursor: pointer;
+    }
+
+    #info_button img {
+      width: 100%;
+      height: auto;
+    }
   </style>
 
 </head>
@@ -77,10 +118,23 @@
 <body>
 
   <div id="AR-UI">
+
     <button id="AniBtn"> 動畫</button>
+
     <div id="panel">
       <p id="loading_text">模型載入中...</p>
     </div>
+
+    <div id="info_Panel">
+      <img class="info_image" id="info_1" src="src\image\info_1.png">
+      <img class="info_image" id="info_2" src="src\image\info_2.png">
+      <img class="info_image" id="info_3" src="src\image\info_3.png">
+      <img class="info_image" id="info_4" src="src\image\info_4.png">
+      <img class="info_image" id="info_5" src="src\image\info_5.png">
+      <img class="info_image" id="info_6" src="src\image\info_6.png">
+      <div id="info_button"><img src="src\image\btn_enter.png"></div>
+    </div>
+
   </div>
 
 
@@ -136,8 +190,13 @@
 
     //#endregion
 
-    Main();
 
+    //執行區塊
+    Main();
+    DOMCtrl();
+
+
+    //主執行
     function Main() {
 
       //場景建構
@@ -187,9 +246,6 @@
       window.addEventListener('resize', onWindowResize);
 
     }
-
-
-
 
     // 啟用 PC 模式控制（非 AR）
     function enablePCControls() {
@@ -356,7 +412,7 @@
       return _model;
     }
 
-    // 手勢控制(主要控制placedMesh 容器)
+    // 手勢控制(主要控制placedMesh 容器，與射線綁定touch事件)
     function GestureCtrl() {
       document.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2 && placedMesh) {
@@ -389,16 +445,24 @@
           // initialAngle = currentAngle;
         }
 
-        //射線
+        //射線(觸控)
         window.addEventListener('touchstart', (event) => {
           // 計算觸控點位置
           const touch = event.touches[0];
           mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
           mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-
           RatCastCtrl(); // 執行射線判定
         });
       });
+
+
+      // //射線(滑鼠)
+      // window.addEventListener('mousedown', (event) => {
+      //   // 將滑鼠座標轉換為 NDC（Normalized Device Coordinates）
+      //   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      //   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      //   RatCastCtrl(); // 執行射線判定
+      // });
 
       document.addEventListener('touchend', (e) => {
         if (placedMesh) {
@@ -420,14 +484,14 @@
       console.log("偵測點已創建");
     }
 
-    //加入可射線互動陣列(在點按模型 load後呼叫)
+    //加入可射線互動陣列(在點按模型 loaded後呼叫)
     function Add_InteractableObjects(MeshName) {
       const HitMesh = scene.getObjectByName(MeshName);
       interactableObjects.push(HitMesh);
       interactableObjects.forEach(mesh => console.log("可互動物件=" + mesh.name));
     }
 
-    //射線判斷
+    //射線控制
     function RatCastCtrl() {
 
       console.log("觸發射線")
@@ -438,10 +502,12 @@
 
       for (let i = 0; i < intersects.length; i++) {
         const hitObject = intersects[i].object;
-        if (hitObject.name === 'hotsport_001') {
-          console.log('碰撞到 hotsport_001');
-          // 執行互動邏輯，例如開窗、展示資訊等
-        }
+        if (hitObject.name === 'hotsport_001') { console.log('碰撞到 hotsport_001'); info_1.style.display = 'block' }
+        if (hitObject.name === 'hotsport_002') { console.log('碰撞到 hotsport_002'); info_2.style.display = 'block' }
+        if (hitObject.name === 'hotsport_003') { console.log('碰撞到 hotsport_003'); info_3.style.display = 'block' }
+        if (hitObject.name === 'hotsport_004') { console.log('碰撞到 hotsport_004'); info_4.style.display = 'block' }
+        if (hitObject.name === 'hotsport_005') { console.log('碰撞到 hotsport_005'); info_5.style.display = 'block' }
+        if (hitObject.name === 'hotsport_006') { console.log('碰撞到 hotsport_006'); info_6.style.display = 'block' }
       }
     }
 
@@ -500,13 +566,13 @@
       //動畫按鈕
       AniBtn.addEventListener("click", () => {
         IsPlayAni = !IsPlayAni;
-        console.log("IsPlayAni=" + IsPlayAni);
+        // console.log("IsPlayAni=" + IsPlayAni);
         if (IsPlayAni) {
           actions.forEach(action => action.play())
-          console.log("播放動畫");
+          // console.log("播放動畫");
         } else {
           actions.forEach(action => action.stop())
-          console.log("停止動畫");
+          // console.log("停止動畫");
         }
       });
 
@@ -534,8 +600,7 @@
     }
 
 
-    //執行區塊
-    DOMCtrl();
+
   </script>
 
 </body>
