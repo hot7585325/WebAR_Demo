@@ -32,7 +32,7 @@
       position: fixed;
       z-index: 9999;
       width: 100vw;
-      height: 50vh;
+      height: 100vh;
       background-color: rgba(24, 2, 221, 0);
       text-align: center;
     }
@@ -111,6 +111,39 @@
       width: 100%;
       height: auto;
     }
+
+    #ButtonPanel {
+      display: none;
+      position: absolute;
+      z-index: 1000;
+      bottom: 0px;
+      width: 100vw;
+      height: 10vh;
+      background-color: rgba(255, 39, 39, 0.801);
+
+      justify-content: center;
+      align-items: center;
+      flex-direction: row;
+      gap: 2%;
+    }
+
+    .CustomBtn {
+      width: auto;
+      max-width: 200px;
+      cursor: pointer;
+      border-width: 2px;
+      border-radius: 30px;
+      background-color: rgb(255, 149, 0);
+      padding: .1em 1em;
+    }
+
+    .CustomBtn p {
+      text-align: center;
+      justify-content: center;
+      font-weight: bolder;
+      font-size: 1.5em;
+      color: rgb(255, 255, 255);
+    }
   </style>
 
 </head>
@@ -119,7 +152,23 @@
 
   <div id="AR-UI">
 
-    <button id="AniBtn"> 動畫</button>
+    <!-- <button id="AniBtn"> 動畫</button> -->
+
+
+    <div id="ButtonPanel">
+
+      <div class="CustomBtn" id="Home_button">
+        <p id="Home_text">返回主選單</p>
+      </div>
+
+      <div class="CustomBtn" id="Ani_button">
+        <p id="Ani_text">動畫播放</p>
+      </div>
+      <div class="CustomBtn" id="Name_button">
+        <p id="Name_text">名稱顯示</p>
+      </div>
+    </div>
+
 
     <div id="panel">
       <p id="loading_text">模型載入中...</p>
@@ -190,7 +239,8 @@
 
     //ui dom用
     const info_button = document.getElementById("info_button")
-    const AniBtn = document.querySelector("#AniBtn")
+    const ButtonPanel = document.querySelector("#ButtonPanel")
+    const Ani_button = document.querySelector("#Ani_button")
     const info_Panel = document.getElementById("info_Panel")
     const info_1 = document.getElementById("info_1")
     const info_2 = document.getElementById("info_2")
@@ -362,7 +412,7 @@
         'src/model/ar_hotpoint.glb',
         function (gltf) {
           Set_Model_Attribute(gltf, 0);
-          AniBtn.style.display = "block"
+          ButtonPanel.style.display = "flex"
           toggleDisplayById("panel")  //再次呼叫會關閉
           console.log('ar_hotpoint成功加入場景');
         },
@@ -593,7 +643,7 @@
       info_button.addEventListener("click", () => { info_6.style.display = "none"; console.log("關閉物件資訊_info_6") })
 
       //動畫按鈕
-      AniBtn.addEventListener("click", () => {
+      Ani_button.addEventListener("click", () => {
         IsPlayAni = !IsPlayAni;
         // console.log("IsPlayAni=" + IsPlayAni);
         if (IsPlayAni) {
