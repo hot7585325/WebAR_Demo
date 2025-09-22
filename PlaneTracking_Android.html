@@ -414,13 +414,17 @@
 
       //動畫
       const _mixer = new AnimationMixer(_model);
-      const clip = gltf.animations[AniIndex];
-      const _action = _mixer.clipAction(clip);
+      gltf.animations.forEach((clip) => {
+        const _action = _mixer.clipAction(clip);
+        _action.play();
+        actions.push(_action);
+      });
+
 
       // 儲存到陣列
       ModelMeshs.push(_model)
       mixers.push(_mixer);
-      actions.push(_action);
+
 
 
       return _model;
@@ -623,7 +627,6 @@
         element.style.display = "none";
       }
     }
-
 
 
   </script>
