@@ -28,11 +28,12 @@
     }
 
     #AR-UI {
+      pointer-events: none;
       touch-action: none;
       position: fixed;
       z-index: 9999;
       width: 100vw;
-      height: 80vh;
+      height: 100vh;
       background-color: rgba(24, 2, 221, 0);
       text-align: center;
     }
@@ -113,6 +114,7 @@
     }
 
     #ButtonPanel {
+      pointer-events: auto;
       display: none;
       position: absolute;
       z-index: 1000;
@@ -163,9 +165,6 @@
 
       <div class="CustomBtn" id="Ani_button">
         <p id="Ani_text">動畫播放</p>
-      </div>
-      <div class="CustomBtn" id="Name_button">
-        <p id="Name_text">名稱顯示</p>
       </div>
     </div>
 
@@ -241,6 +240,7 @@
     const info_button = document.getElementById("info_button")
     const ButtonPanel = document.querySelector("#ButtonPanel")
     const Ani_button = document.querySelector("#Ani_button")
+    const Home_button = document.querySelector("#Home_button")
     const info_Panel = document.getElementById("info_Panel")
     const info_1 = document.getElementById("info_1")
     const info_2 = document.getElementById("info_2")
@@ -287,7 +287,7 @@
       //平面偵測圓環創建
       CreateDetectionRing();
 
-      //模型測試區域
+      //模型測試區域PC用
       // TouchCreateModel();
       // enablePCControls();
 
@@ -466,7 +466,6 @@
       const _mixer = new AnimationMixer(_model);
       gltf.animations.forEach((clip) => {
         const _action = _mixer.clipAction(clip);
-        _action.play();
         actions.push(_action);
       });
 
@@ -641,6 +640,8 @@
       info_button.addEventListener("click", () => { info_4.style.display = "none"; console.log("關閉物件資訊_info_4") })
       info_button.addEventListener("click", () => { info_5.style.display = "none"; console.log("關閉物件資訊_info_5") })
       info_button.addEventListener("click", () => { info_6.style.display = "none"; console.log("關閉物件資訊_info_6") })
+
+      Home_button.addEventListener("click", () => {window.location.href='index.html' })
 
       //動畫按鈕
       Ani_button.addEventListener("click", () => {
