@@ -36,8 +36,8 @@
 
     position: relative;
     left: 50%;
-    width:100vw;
-     transform: translate(-50%, 0%);
+    width: 100vw;
+    transform: translate(-50%, 0%);
     aspect-ratio: 1080/1830;
 
 }
@@ -90,6 +90,7 @@
     width: 100vw;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.801);
+    overflow-x: hidden;
 
     justify-content: center;
     align-items: center;
