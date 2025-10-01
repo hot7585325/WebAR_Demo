@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="src\css\styles_P.css">
 </head>
 
+
+<!-- https://developer.apple.com/documentation/arkit/adding-an-apple-pay-button-or-a-custom-action-in-ar-quick-look?utm_source=chatgpt.com -->
+
 <body>
   <!-- DOM區域 -->
   <div id="ButtonPanel">
@@ -21,16 +24,21 @@
 
   <!-- DOM依賴腳本  -->
   <script src="src\js\PlaneTrackindMode.js"> </script>
- <script>
-  document.getElementById('start-ar').addEventListener('click', function () {
-    const link = document.createElement('a');
-    link.setAttribute('rel', 'ar');
-    link.setAttribute('href', 'src/model/ar_hotpoint.usdz');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  });
-</script>
+  <script>
+    document.getElementById('start-ar').addEventListener('click', function () {
+      const link = document.createElement('a');
+      link.setAttribute('rel', 'ar');
+      // link.setAttribute('href', 'src/model/ar_hotpoint.usdz');
+      link.setAttribute('href', 'src/model/Scene.usdz');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+
+    document.getElementById("Home_button").addEventListener("click", function () {
+      window.location.href = 'index.html'
+    });
+  </script>
 
 </body>
 
