@@ -6,8 +6,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <!-- 網頁用Console -->
-  <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
-  <script>  var vConsole = new VConsole();  </script>
+  <!-- <script src="https://cdn.bootcdn.net/ajax/libs/vConsole/3.15.0/vconsole.min.js"></script>
+  <script>  var vConsole = new VConsole();  </script> -->
 
   <!-- GLTFLoader中的import有使用 from 'three';，如果不用importmap會導致找不到模組 -->
   <script type="importmap">
@@ -157,11 +157,36 @@
       font-size: 1.5em;
       color: rgb(255, 255, 255);
     }
+
+    .tip {
+
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      width: auto;
+      height: auto;
+      background-color: rgba(134, 134, 42, 0);
+
+      border-color: white;
+      border-width: 5px;
+      border-style: solid;
+      border-radius: 10px;
+
+      color: rgb(255, 255, 255);
+      text-align: center;
+      font-size: 0.8em;
+
+    }
   </style>
 
 </head>
 
 <body>
+  <div class="tip">
+    <h1>請點按下方的start AR鈕</h1>
+  </div>
 
   <div id="AR-UI">
 
