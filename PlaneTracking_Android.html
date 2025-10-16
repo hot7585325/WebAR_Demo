@@ -179,6 +179,10 @@
       font-size: 0.8em;
 
     }
+
+    #tip_ar {
+      display: none;
+    }
   </style>
 
 </head>
@@ -190,7 +194,9 @@
 
   <div id="AR-UI">
 
-    <!-- <button id="AniBtn"> 動畫</button> -->
+    <div class="tip" id="tip_ar">
+      <h1>請持續移動手機</h1>
+    </div>
 
 
     <div id="ButtonPanel">
@@ -284,6 +290,7 @@
     const info_4 = document.getElementById("info_4")
     const info_5 = document.getElementById("info_5")
     const info_6 = document.getElementById("info_6")
+    const tip_ar = document.getElementById("tip_ar")
 
     //#endregion
 
@@ -586,6 +593,7 @@
       reticle.visible = false;
       scene.add(reticle);
       console.log("偵測點已創建");
+      tip_ar.display = "block"
     }
 
     //加入可射線互動陣列(在點按模型 loaded後呼叫)
@@ -653,8 +661,10 @@
             const hit = hitTestResults[0];
             reticle.visible = true;
             reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+            tip_ar.display = "none"
           } else {
             reticle.visible = false;
+            tip_ar.display = "block"
           }
         }
       }
