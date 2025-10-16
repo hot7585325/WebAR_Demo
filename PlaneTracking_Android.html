@@ -430,7 +430,7 @@
     //點擊產生模型，把要load的模型都放在裡面
     async function TouchCreateModel() {
       if (hasPlaced) return; // 已經放置過了，不再執行
-      if (!reticle) return;  //測試時註解
+      if (!reticle.visible) return;  //測試時註解
 
 
       //設置placedMesh的位置，否則會再相機的中心點
