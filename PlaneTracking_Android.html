@@ -181,7 +181,24 @@
     }
 
     #tip_ar {
+      position: absolute;
+      z-index: 1000;
+      background-color: rgba(0, 0, 0, 0.534);
+      width: 100%;
+      height: 100%;
+      color: rgb(255, 255, 255);
       display: none;
+      padding-top: 50%;
+    }
+
+    #tip_ar_p {
+      position: absolute;
+      z-index: 1000;
+      top: 40%;
+      left: 50%;
+      font-size: 1.5em;
+      font-weight: bold;
+      transform: translate(-50%, -50%);
     }
   </style>
 
@@ -192,12 +209,14 @@
     <h1>請點按下方的start AR鈕</h1>
   </div>
 
+
+
+
   <div id="AR-UI">
 
-    <div class="tip" id="tip_ar">
-      <h1>請持續移動手機</h1>
+    <div id="tip_ar">
+      <p id="tip_ar_p">請持續移動手機</p>
     </div>
-
 
     <div id="ButtonPanel">
 
@@ -291,7 +310,7 @@
     const info_5 = document.getElementById("info_5")
     const info_6 = document.getElementById("info_6")
     const tip_ar = document.getElementById("tip_ar")
-
+    const tip_ar_p = document.getElementById("tip_ar_p")
     //#endregion
 
 
@@ -323,12 +342,14 @@
 
       //Three.js 提供的AR按鈕，會在click時 去向webxr請求功能模組
       const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.getElementById('AR-UI') } });
+      arButton.addEventListener("click", () => { toggleDisplayById("tip_ar") })
       document.body.appendChild(arButton);
       console.log('ARButton created:', arButton);
 
 
       //平面偵測圓環創建
       CreateDetectionRing();
+
 
       //模型測試區域PC用
       // TouchCreateModel();
@@ -439,7 +460,7 @@
       if (hasPlaced) return; // 已經放置過了，不再執行
       if (!reticle.visible) return;  //測試時註解
 
-
+      toggleDisplayById("tip_ar");
       //設置placedMesh的位置，否則會再相機的中心點
       placedMesh.position.setFromMatrixPosition(reticle.matrix);
       placedMesh.quaternion.setFromRotationMatrix(reticle.matrix);
@@ -450,6 +471,7 @@
       const module = await import('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/GLTFLoader.js');
       const GLTFLoader = module.GLTFLoader;
       const loader = new GLTFLoader();
+
 
       //主模型
       loader.load(
@@ -593,7 +615,6 @@
       reticle.visible = false;
       scene.add(reticle);
       console.log("偵測點已創建");
-      tip_ar.display = "block"
     }
 
     //加入可射線互動陣列(在點按模型 loaded後呼叫)
@@ -655,16 +676,15 @@
         }
 
         if (hitTestSource) {
-          const hitTestResults = frame.getHitTestResults(hitTestSource);
 
+          const hitTestResults = frame.getHitTestResults(hitTestSource);
           if (hitTestResults.length && hasPlaced == false) {
             const hit = hitTestResults[0];
             reticle.visible = true;
+            tip_ar_p.innerText = "請點按螢幕";
             reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-            tip_ar.display = "none"
           } else {
             reticle.visible = false;
-            tip_ar.display = "block"
           }
         }
       }
